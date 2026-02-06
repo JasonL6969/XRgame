@@ -230,6 +230,49 @@
     }
     const beep = makeBeep();
 
+    // Pre-baked Cantonese TTS mp3 fallback (generated via tts/texts.json)
+    const ttsAudioBase = "audio/";
+    const audioMap = {
+      "呢件文物同植物有關。": "cabbage_hint1",
+      "佢係用玉石雕成，但睇落好似真菜葉咁柔軟。": "cabbage_hint2",
+      "綠色、似菜葉。": "cabbage_hint3",
+      "呢件文物同食物有關，但唔係食得㗎。": "meat_hint1",
+      "佢利用天然石紋做出層次，好似有肥有瘦。": "meat_hint2",
+      "粉紅加深色分層，好似一嚿叉燒。": "meat_hint3",
+      "呢件文物係一件好細緻嘅瓷器。": "chicken_hint1",
+      "佢用咗一種叫『鬥彩』嘅裝飾技法。": "chicken_hint2",
+      "杯身上有公雞、母雞同小雞圖案。": "chicken_hint3",
+      "你搵到翠玉白菜喇！佢用翠玉雕成，好似真白菜，象徵清白同好彩。": "cabbage_speak",
+      "你答啱喇！肉形石係石頭雕成，好似叉燒咁，仲用石頭天然顏色做出肥瘦。": "meat_speak",
+      "你搵到明成化鬥彩雞缸杯喇！佢係成化年間嘅名瓷，以鬥彩技法燒製，畫有一家雞嘅溫馨場面。": "chicken_speak",
+      "你搵到翠玉白菜喇！": "found_cabbage",
+      "你搵到肉形石喇！": "found_meat",
+      "你搵到明成化鬥彩雞缸杯喇！": "found_chicken",
+      "嘩！你搵得超快！": "praise_fast",
+      "好叻！搵得好快！": "praise_good",
+      "下一件文物簡介：肉形石展示咗古代工匠點樣善用天然石紋，令作品以假亂真。": "next_intro_meat",
+      "下一件文物簡介：鬥彩雞缸杯係明代成化朝最受推崇嘅瓷器之一。": "next_intro_chicken",
+      "準備好未？下一件開始喇。": "next_ready",
+      "完成喇！你已經收集咗三件文物。好叻！": "finish_all",
+      "時間到喇，下次再挑戰。": "time_up",
+      "唔係呢件，再搵下！": "not_this_one",
+      "你好近喇，留意下細節。": "close_one",
+      "方向啱，但仲未係。": "direction_ok",
+      "呢件同目標無關，轉個方向望下。": "far_one"
+    };
+
+    const playAudio = (id, textForToast="") => {
+      if (!id) return false;
+      try {
+        const a = new Audio(`${ttsAudioBase}${id}.mp3`);
+        a.play().catch(() => {});
+      } catch (e) {
+        return false;
+      }
+      if (textForToast) showToast(textForToast);
+      return true;
+    };
+
     function showToast(text) {
       const toast = document.getElementById("toast");
       const toastText = document.getElementById("toastText");
@@ -284,9 +327,17 @@
       cachedVoice = pickCantoneseVoice();
     }
 
+    const hasNativeTTS = () => {
+      try {
+        if (!('speechSynthesis' in window)) return false;
+        const v = window.speechSynthesis.getVoices?.();
+        return v && v.length > 0;
+      } catch (e) { return false; }
+    };
+
     function speakCantonese(text) {
-      if (!('speechSynthesis' in window)) return;
-      if (!text) return;
+      if (!text) return false;
+      if (!hasNativeTTS()) return false;
       const u = new SpeechSynthesisUtterance(text);
       u.lang = 'zh-HK';
       if (!cachedVoice) cachedVoice = pickCantoneseVoice();
@@ -294,40 +345,68 @@
       u.rate = 1.02;
       u.pitch = 1.0;
       try { window.speechSynthesis.cancel(); } catch(e) {}
-      try { window.speechSynthesis.speak(u); } catch(e) {}
+      try { window.speechSynthesis.speak(u); return true; } catch(e) { return false; }
+    }
+
+    function sayWithFallback(text, toastAlso=false) {
+      if (!text) return;
+      if (!speakCantonese(text)) {
+        const id = audioMap[text];
+        if (!playAudio(id, toastAlso ? text : "")) {
+          if (toastAlso) showToast(text);
+        }
+      }
     }
 
     function speakQueue(texts, onDone) {
-      if (!('speechSynthesis' in window)) {
-        if (typeof onDone === 'function') onDone();
-        return;
-      }
       const list = (texts || []).filter(Boolean);
       if (!list.length) {
         if (typeof onDone === 'function') onDone();
         return;
       }
 
-      try { window.speechSynthesis.cancel(); } catch(e) {}
+      const nativeOK = hasNativeTTS();
 
+      if (nativeOK) {
+        try { window.speechSynthesis.cancel(); } catch(e) {}
+        let i = 0;
+        const next = () => {
+          if (i >= list.length) {
+            if (typeof onDone === 'function') onDone();
+            return;
+          }
+          const t = list[i++];
+          const u = new SpeechSynthesisUtterance(t);
+          u.lang = 'zh-HK';
+          if (!cachedVoice) cachedVoice = pickCantoneseVoice();
+          if (cachedVoice) u.voice = cachedVoice;
+          u.rate = 1.02;
+          u.pitch = 1.0;
+          u.onend = () => next();
+          try { window.speechSynthesis.speak(u); } catch(e) { next(); }
+        };
+        next();
+        return;
+      }
+
+      // fallback: sequentially play pre-baked mp3
       let i = 0;
-      const next = () => {
+      const nextAudio = () => {
         if (i >= list.length) {
           if (typeof onDone === 'function') onDone();
           return;
         }
         const t = list[i++];
-        const u = new SpeechSynthesisUtterance(t);
-        u.lang = 'zh-HK';
-        if (!cachedVoice) cachedVoice = pickCantoneseVoice();
-        if (cachedVoice) u.voice = cachedVoice;
-        u.rate = 1.02;
-        u.pitch = 1.0;
-        u.onend = () => next();
-        try { window.speechSynthesis.speak(u); } catch(e) { next(); }
+        const id = audioMap[t];
+        if (!id) { showToast(t); return nextAudio(); }
+        try {
+          const a = new Audio(`${ttsAudioBase}${id}.mp3`);
+          a.onended = () => nextAudio();
+          a.onerror = () => { showToast(t); nextAudio(); };
+          a.play().catch(() => { showToast(t); nextAudio(); });
+        } catch (e) { showToast(t); nextAudio(); }
       };
-
-      next();
+      nextAudio();
     }
 
     // Controller: trigger -> picked
@@ -518,9 +597,9 @@
 
         if (success) {
           this.showCollection();
-          speakCantonese("完成喇！你已經收集咗三件文物。好叻！");
+          sayWithFallback("完成喇！你已經收集咗三件文物。好叻！", true);
         } else {
-          speakCantonese("時間到喇，下次再挑戰。");
+          sayWithFallback("時間到喇，下次再挑戰。", true);
         }
       },
 
@@ -587,7 +666,7 @@
         this.floatingText.setAttribute("value", `搵：${a.name}`);
 
         if (opts.speak === false) return;
-        speakCantonese(hint);
+        sayWithFallback(hint, true);
       },
 
       clearHintTimers() {
@@ -742,7 +821,7 @@
 
           showToast(msg);
           beep.play(tone, 0.09, 0.05);
-          speakCantonese(speak);
+          sayWithFallback(speak, false);
           return;
         }
 

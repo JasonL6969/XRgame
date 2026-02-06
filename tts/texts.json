@@ -1,0 +1,33 @@
+[
+  {"id":"cabbage_hint1","text":"呢件文物同植物有關。"},
+  {"id":"cabbage_hint2","text":"佢係用玉石雕成，但睇落好似真菜葉咁柔軟。"},
+  {"id":"cabbage_hint3","text":"綠色、似菜葉。"},
+  {"id":"meat_hint1","text":"呢件文物同食物有關，但唔係食得㗎。"},
+  {"id":"meat_hint2","text":"佢利用天然石紋做出層次，好似有肥有瘦。"},
+  {"id":"meat_hint3","text":"粉紅加深色分層，好似一嚿叉燒。"},
+  {"id":"chicken_hint1","text":"呢件文物係一件好細緻嘅瓷器。"},
+  {"id":"chicken_hint2","text":"佢用咗一種叫『鬥彩』嘅裝飾技法。"},
+  {"id":"chicken_hint3","text":"杯身上有公雞、母雞同小雞圖案。"},
+
+  {"id":"cabbage_speak","text":"你搵到翠玉白菜喇！佢用翠玉雕成，好似真白菜，象徵清白同好彩。"},
+  {"id":"meat_speak","text":"你答啱喇！肉形石係石頭雕成，好似叉燒咁，仲用石頭天然顏色做出肥瘦。"},
+  {"id":"chicken_speak","text":"你搵到明成化鬥彩雞缸杯喇！佢係成化年間嘅名瓷，以鬥彩技法燒製，畫有一家雞嘅溫馨場面。"},
+
+  {"id":"found_cabbage","text":"你搵到翠玉白菜喇！"},
+  {"id":"found_meat","text":"你搵到肉形石喇！"},
+  {"id":"found_chicken","text":"你搵到明成化鬥彩雞缸杯喇！"},
+
+  {"id":"praise_fast","text":"嘩！你搵得超快！"},
+  {"id":"praise_good","text":"好叻！搵得好快！"},
+
+  {"id":"next_intro_meat","text":"下一件文物簡介：肉形石展示咗古代工匠點樣善用天然石紋，令作品以假亂真。"},
+  {"id":"next_intro_chicken","text":"下一件文物簡介：鬥彩雞缸杯係明代成化朝最受推崇嘅瓷器之一。"},
+
+  {"id":"next_ready","text":"準備好未？下一件開始喇。"},
+  {"id":"finish_all","text":"完成喇！你已經收集咗三件文物。好叻！"},
+  {"id":"time_up","text":"時間到喇，下次再挑戰。"},
+  {"id":"not_this_one","text":"唔係呢件，再搵下！"},
+  {"id":"close_one","text":"你好近喇，留意下細節。"},
+  {"id":"direction_ok","text":"方向啱，但仲未係。"},
+  {"id":"far_one","text":"呢件同目標無關，轉個方向望下。"}
+]
