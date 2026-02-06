@@ -1,0 +1,998 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>故宮尋寶：搵到就聽（最小可玩版 / Quest 3S MR）</title>
+
+  <!-- A-Frame stable release build (Quest 3 / 3S 上相容性與社群測試最成熟) -->
+  <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
+
+  <style>
+    html, body {
+      margin:0; padding:0; width:100%; height:100%; overflow:hidden;
+      /* 桌機預設用深色底（避免你見到一片白）；進入 XR(Passthrough) 仍然係透明 */
+      background: #0b1220;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+    }
+
+    /* DOM Overlay (HUD) */
+    #overlay {
+      position: fixed;
+      inset: 0;
+      display: block;
+      pointer-events: none;
+      color: #fff;
+      text-shadow: 0 2px 10px rgba(0,0,0,.6);
+      z-index: 9998;
+    }
+    #overlay:xr-overlay { display:block; }
+
+    #hud {
+      position: absolute;
+      left: 12px; right: 12px; top: 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.40);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,.12);
+      max-width: 720px;
+    }
+
+    #row { display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+    .pill {
+      display:inline-flex; gap:8px; align-items:center;
+      padding: 6px 10px; border-radius: 999px;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.14);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    #title { font-size: 16px; font-weight: 800; margin: 0 0 6px 0; }
+    #msg { font-size: 14px; margin: 0; line-height: 1.35; opacity: .98; }
+    #hint { font-size: 12px; opacity: .9; margin-top: 8px; }
+
+    #progressBarWrap { margin-top: 10px; height: 8px; border-radius: 999px; background: rgba(255,255,255,.12); overflow:hidden; }
+    #progressBar { height: 100%; width: 0%; background: linear-gradient(90deg,#6ee7ff,#7c3aed); border-radius: 999px; }
+
+    /* Info card */
+    #info {
+      position: absolute;
+      left: 12px; right: 12px;
+      bottom: 74px;
+      display: none;
+      max-width: 720px;
+    }
+    #info.show { display: block; }
+    #infoCard {
+      pointer-events: none;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.45);
+      border: 1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(8px);
+    }
+    #infoTitle { font-size: 15px; font-weight: 800; margin: 0 0 6px 0; }
+    #infoBody { font-size: 13px; margin: 0; line-height: 1.45; opacity: .98; white-space: pre-line; }
+
+    /* Toast */
+    #toast {
+      position:absolute;
+      left: 12px; right: 12px;
+      bottom: 14px;
+      display:flex; justify-content:center;
+      pointer-events:none;
+    }
+    #toast > div {
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.45);
+      border: 1px solid rgba(255,255,255,.12);
+      font-size: 13px;
+      max-width: 720px;
+      transform: translateY(6px);
+      opacity: 0;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+    #toast.show > div { opacity: 1; transform: translateY(0px); }
+
+    /* Crosshair */
+    #crosshair{
+      position: fixed;
+      left: 50%; top: 50%;
+      width: 18px; height: 18px;
+      margin-left: -9px; margin-top: -9px;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.85;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,.45));
+    }
+    #crosshair::before,
+    #crosshair::after{
+      content: "";
+      position: absolute;
+      left: 50%; top: 50%;
+      background: rgba(255,255,255,.92);
+      border-radius: 2px;
+    }
+    #crosshair::before{ width: 18px; height: 2px; transform: translate(-50%, -50%); }
+    #crosshair::after{ width: 2px; height: 18px; transform: translate(-50%, -50%); }
+  </style>
+</head>
+
+<body>
+  <div id="overlay">
+    <div id="hud">
+      <div id="row">
+        <div class="pill">🧭 故宮尋寶（3–4 分鐘）</div>
+        <div class="pill">⏱ <span id="timer">03:30</span></div>
+        <div class="pill">✅ 已搵到 <span id="found">0</span>/3</div>
+      </div>
+      <h1 id="title">開始：撳一下（桌機）／按 Trigger（Quest）</h1>
+      <p id="msg">目標會顯示喺上面。你要喺場景入面搵到對應物品，點佢就會顯示資料＋用廣東話讀出。</p>
+      <div id="hint">建議：Stationary（原地站立）最穩定，暈動風險最低。</div>
+      <div id="progressBarWrap"><div id="progressBar"></div></div>
+    </div>
+
+    <div id="info"><div id="infoCard">
+      <div id="infoTitle">（文物資料）</div>
+      <p id="infoBody">（會喺你搵到後顯示）</p>
+    </div></div>
+
+    <div id="toast"><div id="toastText">完成！</div></div>
+    <div id="crosshair" aria-hidden="true"></div>
+  </div>
+
+  <a-scene
+    renderer="antialias: true; colorManagement: true; physicallyCorrectLights: false; alpha: true; toneMapping: NoToneMapping; exposure: 1.25;"
+    background="transparent: true"
+    xr-mode-ui="enabled: true; XRMode: ar;"
+    webxr="optionalFeatures: dom-overlay, hit-test; overlayElement: #overlay;"
+    vr-mode-ui="enabled: false"
+  >
+    <a-assets timeout="10000">
+      <a-asset-item id="mdl-cabbage" src="3dModel/cabbage.glb"></a-asset-item>
+      <a-asset-item id="mdl-meat" src="3dModel/meat.glb"></a-asset-item>
+      <a-asset-item id="mdl-chicken" src="3dModel/chickenCup.glb"></a-asset-item>
+      <a-asset-item id="mdl-fake01" src="3dModel/fake01.glb"></a-asset-item>
+      <a-asset-item id="mdl-fake02" src="3dModel/fake02.glb"></a-asset-item>
+      <a-asset-item id="mdl-fake03" src="3dModel/fake03.glb"></a-asset-item>
+      <a-asset-item id="mdl-fake04" src="3dModel/fake04.glb"></a-asset-item>
+    </a-assets>
+
+    <a-entity id="rig">
+      <a-camera position="0 1.6 0" look-controls="enabled: true"
+                cursor="rayOrigin: mouse; fuse: false"
+                raycaster="objects: .clickable; far: 10; interval: 0">
+      </a-camera>
+    </a-entity>
+
+    <a-entity id="rightHand"
+      laser-controls="hand: right"
+      raycaster="objects: .clickable; far: 10; interval: 0"
+      line="color: #7dd3fc; opacity: 0.9"
+      controller-picker>
+    </a-entity>
+
+    <a-entity id="leftHand" laser-controls="hand: left" line="color: #a7f3d0; opacity: 0.65"></a-entity>
+
+    <!-- Lights (MR-friendly) -->
+    <a-entity light="type: ambient; intensity: 1.05;"></a-entity>
+    <a-entity light="type: hemisphere; intensity: 0.85; color: #ffffff; groundColor: #2b3344"></a-entity>
+    <a-entity light="type: directional; intensity: 0.95; color: #ffffff" position="1.2 2.6 1.0"></a-entity>
+    <a-entity light="type: directional; intensity: 0.55; color: #e6f0ff" position="-1.4 1.8 -1.0"></a-entity>
+
+    <a-entity id="huntRoot" position="0 0.15 -1.6" hunt-game>
+      <a-entity id="platform" position="0 -0.25 0">
+        <a-cylinder radius="0.70" height="0.06" material="color:#0b1220; opacity:0.45; transparent:true; roughness:1"></a-cylinder>
+        <a-ring radius-inner="0.62" radius-outer="0.70" rotation="-90 0 0"
+                material="color:#7dd3fc; opacity:0.22; transparent:true;"></a-ring>
+      </a-entity>
+
+      <a-entity id="floatingText" position="0 0.42 0">
+        <a-text value="開始後：搵到目標就點佢" align="center" width="2.8" color="#EAF2FF" opacity="0.92"></a-text>
+      </a-entity>
+
+      <a-entity id="items"></a-entity>
+    </a-entity>
+
+    <a-circle radius="2.0" rotation="-90 0 0" position="0 0 0" material="color:#7dd3fc; opacity:0.03; transparent:true;"></a-circle>
+  </a-scene>
+
+  <script>
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+    function shuffleInPlace(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function makeBeep() {
+      let ctx = null;
+      return {
+        play(freq=660, dur=0.08, gain=0.06) {
+          if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = "sine";
+          o.frequency.value = freq;
+          g.gain.value = gain;
+          o.connect(g);
+          g.connect(ctx.destination);
+          o.start();
+          o.stop(ctx.currentTime + dur);
+        }
+      };
+    }
+    const beep = makeBeep();
+
+    function showToast(text) {
+      const toast = document.getElementById("toast");
+      const toastText = document.getElementById("toastText");
+      if (!toast || !toastText) return;
+      toastText.textContent = text;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 900);
+    }
+
+    function setInfoCard(show, title="", body="") {
+      const box = document.getElementById("info");
+      const t = document.getElementById("infoTitle");
+      const b = document.getElementById("infoBody");
+      if (!box || !t || !b) return;
+      if (!show) {
+        box.classList.remove("show");
+        return;
+      }
+      t.textContent = title;
+      b.textContent = body;
+      box.classList.add("show");
+    }
+
+    // Cantonese TTS
+    let cachedVoice = null;
+
+    function pickCantoneseVoice() {
+      if (!('speechSynthesis' in window)) return null;
+      const voices = window.speechSynthesis.getVoices?.() || [];
+      if (!voices.length) return null;
+
+      const hk = voices.find(v => (v.lang || '').toLowerCase() === 'zh-hk');
+      if (hk) return hk;
+
+      const hk2 = voices.find(v => /hk/i.test(v.lang || '') || /canton/i.test(v.name || ''));
+      if (hk2) return hk2;
+
+      const hant = voices.find(v => /zh-hant/i.test(v.lang || ''));
+      if (hant) return hant;
+      const zhtw = voices.find(v => /zh-tw/i.test(v.lang || ''));
+      if (zhtw) return zhtw;
+      const zh = voices.find(v => /^zh/i.test(v.lang || ''));
+      return zh || null;
+    }
+
+    function primeTTS() {
+      if (!('speechSynthesis' in window)) return;
+      try { window.speechSynthesis.getVoices(); } catch (e) {}
+      window.speechSynthesis.onvoiceschanged = () => {
+        cachedVoice = pickCantoneseVoice();
+      };
+      cachedVoice = pickCantoneseVoice();
+    }
+
+    function speakCantonese(text) {
+      if (!('speechSynthesis' in window)) return;
+      if (!text) return;
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'zh-HK';
+      if (!cachedVoice) cachedVoice = pickCantoneseVoice();
+      if (cachedVoice) u.voice = cachedVoice;
+      u.rate = 1.02;
+      u.pitch = 1.0;
+      try { window.speechSynthesis.cancel(); } catch(e) {}
+      try { window.speechSynthesis.speak(u); } catch(e) {}
+    }
+
+    function speakQueue(texts, onDone) {
+      if (!('speechSynthesis' in window)) {
+        if (typeof onDone === 'function') onDone();
+        return;
+      }
+      const list = (texts || []).filter(Boolean);
+      if (!list.length) {
+        if (typeof onDone === 'function') onDone();
+        return;
+      }
+
+      try { window.speechSynthesis.cancel(); } catch(e) {}
+
+      let i = 0;
+      const next = () => {
+        if (i >= list.length) {
+          if (typeof onDone === 'function') onDone();
+          return;
+        }
+        const t = list[i++];
+        const u = new SpeechSynthesisUtterance(t);
+        u.lang = 'zh-HK';
+        if (!cachedVoice) cachedVoice = pickCantoneseVoice();
+        if (cachedVoice) u.voice = cachedVoice;
+        u.rate = 1.02;
+        u.pitch = 1.0;
+        u.onend = () => next();
+        try { window.speechSynthesis.speak(u); } catch(e) { next(); }
+      };
+
+      next();
+    }
+
+    // Controller: trigger -> picked
+    AFRAME.registerComponent("controller-picker", {
+      init() {
+        this.el.addEventListener("triggerdown", () => {
+          try { beep.play(520, 0.03, 0.001); } catch(e) {}
+          const rc = this.el.components.raycaster;
+          if (!rc) return;
+          const hit = (rc.intersectedEls && rc.intersectedEls[0]) ? rc.intersectedEls[0] : null;
+          if (!hit) return;
+          const target = hit.closest?.('.artifactHit') || hit;
+          target.emit("picked", { hand: this.el.id }, false);
+        });
+      }
+    });
+
+    function onActivate(el, handler) {
+      el.addEventListener("picked", handler);
+      el.addEventListener("click", handler);
+    }
+
+    AFRAME.registerComponent("hunt-game", {
+      init() {
+        this.hudTitle = document.getElementById("title");
+        this.hudMsg = document.getElementById("msg");
+        this.hudTimer = document.getElementById("timer");
+        this.hudFound = document.getElementById("found");
+        this.progressBar = document.getElementById("progressBar");
+        this.floatingText = document.querySelector("#floatingText a-text");
+        this.itemsRoot = document.getElementById("items");
+
+        this.huntRootEl = this.el;
+
+        this.started = false;
+        this.totalSeconds = 210;
+        this.leftSeconds = this.totalSeconds;
+        this._tickInterval = null;
+
+        this.artifacts = [
+          {
+            id: "cabbage",
+            name: "翠玉白菜",
+            hints: ["呢件文物同植物有關。","佢係用玉石雕成，但睇落好似真菜葉咁柔軟。","綠色、似菜葉。"],
+            extraIntro: "翠玉白菜係清代宮廷收藏，因為造型生動，成為故宮代表文物之一。",
+            infoTitle: "翠玉白菜（清代）",
+            infoBody: `• 用翠玉雕成，好似真白菜\n• 象徵清白同好彩\n• 係故宮最受歡迎文物之一`,
+            speak: "你搵到翠玉白菜喇！佢用翠玉雕成，好似真白菜，象徵清白同好彩。",
+            make: (el) => this.buildCabbage(el)
+          },
+          {
+            id: "meat",
+            name: "肉形石",
+            hints: ["呢件文物同食物有關，但唔係食得㗎。","佢利用天然石紋做出層次，好似有肥有瘦。","粉紅加深色分層，好似一嚿叉燒。"],
+            extraIntro: "肉形石展示咗古代工匠點樣善用天然石紋，令作品以假亂真。",
+            infoTitle: "肉形石（清代）",
+            infoBody: `• 用石頭雕到似叉燒\n• 利用石頭天然顏色做肥瘦\n• 提醒你：睇落似食物，其實係文物`,
+            speak: "你答啱喇！肉形石係石頭雕成，好似叉燒咁，仲用石頭天然顏色做出肥瘦。",
+            make: (el) => this.buildMeatStone(el)
+          },
+          {
+            id: "chickenCup",
+            name: "明 成化 鬥彩雞缸杯",
+            hints: ["呢件文物係一件好細緻嘅瓷器。","佢用咗一種叫『鬥彩』嘅裝飾技法。","杯身上有公雞、母雞同小雞圖案。"],
+            extraIntro: "鬥彩雞缸杯係明代成化朝最受推崇嘅瓷器之一。",
+            infoTitle: "明 成化 鬥彩雞缸杯",
+            infoBody: `• 明代成化年間嘅宮廷御用瓷器\n• 以『鬥彩』技法燒製\n• 杯身繪有公雞、母雞同小雞\n• 明末已有『一雙值錢十萬』嘅說法`,
+            speak: "你搵到明成化鬥彩雞缸杯喇！佢係成化年間嘅名瓷，以鬥彩技法燒製，畫有一家雞嘅溫馨場面。",
+            make: (el) => this.buildChickenCup(el)
+          }
+        ];
+
+        this.decoys = [
+          { id: "decoy_green_tall", name: "綠色擺設", make: (el) => this.buildDecoyGreenTall(el) },
+          { id: "decoy_green_gem",  name: "綠色寶石", make: (el) => this.buildDecoyGreenGem(el) },
+          { id: "decoy_meat_block", name: "肉色石塊", make: (el) => this.buildDecoyMeatBlock(el) },
+          { id: "decoy_brown_stone",name: "啡色石頭", make: (el) => this.buildDecoyBrownStone(el) },
+          { id: "decoy_teal_pillar",name: "假文物",   make: (el) => this.buildDecoyTealPillar(el) },
+          { id: "decoy_plate",      name: "刻紋板",   make: (el) => this.buildDecoyPlate(el) }
+        ];
+
+        this.targetIndex = 0;
+        this.hintLevel = 0;
+        this.hintIntervalMs = 6000;
+        this._hintTimeouts = [];
+        this.targetStartTimeMs = 0;
+
+        this.cameraEl = document.querySelector('a-camera');
+        this.foundSet = new Set();
+
+        const rightHand = document.getElementById("rightHand");
+        rightHand.addEventListener("triggerdown", () => {
+          if (!this.started) this.startGame();
+        });
+        window.addEventListener("click", () => {
+          if (!this.started) this.startGame();
+        });
+        window.addEventListener("keydown", (e) => {
+          if (e.code !== "Space") return;
+          if (!this.started) this.startGame();
+        });
+
+        this.setReadyHUD();
+        setInfoCard(false);
+        primeTTS();
+
+        const scene = this.el.sceneEl;
+        if (scene) {
+          scene.addEventListener('enter-vr', () => {
+            this.centerHuntOnPlayer();
+            this.spawnArtifacts();
+            this.applyTargetHighlight();
+          });
+        }
+
+        this.centerHuntOnPlayer();
+        this.spawnArtifacts();
+        this.applyTargetHighlight();
+      },
+
+      remove() {
+        if (this._tickInterval) clearInterval(this._tickInterval);
+      },
+
+      centerHuntOnPlayer() {
+        try {
+          const cam = this.cameraEl;
+          if (!cam || !cam.object3D) return;
+          const p = new THREE.Vector3();
+          cam.object3D.getWorldPosition(p);
+          this.huntRootEl.object3D.position.set(p.x, 0.15, p.z);
+        } catch (e) {}
+      },
+
+      setReadyHUD() {
+        this.hudTitle.textContent = "開始：撳一下（桌機）／按 Trigger（Quest）";
+        this.hudMsg.textContent = "開始後，上面會顯示目標。搵到物件就點佢，會顯示資料同讀出廣東話。";
+        this.updateTimerHUD();
+        this.updateProgressHUD();
+        this.hudFound.textContent = "0";
+        this.floatingText.setAttribute("value", "撳一下開始，搵到目標就點佢");
+      },
+
+      startGame() {
+        this.centerHuntOnPlayer();
+        this.spawnArtifacts();
+        this.applyTargetHighlight();
+
+        this.started = true;
+        this.leftSeconds = this.totalSeconds;
+        this.targetIndex = 0;
+        this.foundSet.clear();
+        this.hudFound.textContent = "0";
+        setInfoCard(false);
+
+        this.resetAllItems();
+        this.applyTargetHighlight();
+
+        beep.play(784, 0.07, 0.05);
+        showToast("開始！搵第一樣～");
+
+        this.startHintCycle(true);
+
+        if (this._tickInterval) clearInterval(this._tickInterval);
+        this._tickInterval = setInterval(() => {
+          this.leftSeconds--;
+          this.updateTimerHUD();
+          this.updateProgressHUD();
+          if (this.leftSeconds <= 0) this.endGame(false);
+        }, 1000);
+      },
+
+      endGame(success) {
+        if (this._tickInterval) clearInterval(this._tickInterval);
+        this._tickInterval = null;
+
+        const msg = success ? "完成！你係『故宮小偵探』🕵️" : "時間到～再試多次都得！";
+
+        this.hudTitle.textContent = success ? "完成！" : "時間到";
+        this.hudMsg.textContent = msg;
+
+        this.floatingText.setAttribute("value", success ? "恭喜完成！" : "下次再挑戰～");
+        showToast(success ? "🎉 完成！" : "⏱ 時間到");
+        beep.play(success ? 988 : 220, 0.12, 0.06);
+
+        this.started = false;
+        setInfoCard(true, this.hudTitle.textContent, msg);
+
+        if (success) {
+          this.showCollection();
+          speakCantonese("完成喇！你已經收集咗三件文物。好叻！");
+        } else {
+          speakCantonese("時間到喇，下次再挑戰。");
+        }
+      },
+
+      showCollection() {
+        while (this.itemsRoot.firstChild) this.itemsRoot.removeChild(this.itemsRoot.firstChild);
+
+        const rowY = 0.05;
+        const z = -0.4;
+        const xs = [-0.55, 0, 0.55];
+
+        this.artifacts.forEach((a, i) => {
+          const wrap = document.createElement("a-entity");
+          wrap.setAttribute("position", `${xs[i]} ${rowY} ${z}`);
+          wrap.setAttribute("rotation", "0 0 0");
+
+          const base = document.createElement("a-cylinder");
+          base.setAttribute("height", "0.06");
+          base.setAttribute("radius", "0.20");
+          base.setAttribute("material", "color:#111827; opacity:0.35; transparent:true; roughness:1");
+          base.setAttribute("position", "0 -0.10 0");
+
+          const body = document.createElement("a-entity");
+          body.setAttribute("position", "0 0 0");
+          a.make(body);
+
+          const label = document.createElement("a-text");
+          label.setAttribute("value", a.name);
+          label.setAttribute("align", "center");
+          label.setAttribute("width", "1.6");
+          label.setAttribute("position", "0 -0.28 0");
+          label.setAttribute("color", "#EAF2FF");
+          label.setAttribute("opacity", "0.92");
+
+          wrap.appendChild(body);
+          wrap.appendChild(base);
+          wrap.appendChild(label);
+          this.itemsRoot.appendChild(wrap);
+        });
+
+        this.floatingText.setAttribute("value", "收藏展示：你已收集三件文物！");
+      },
+
+      updateTimerHUD() {
+        const s = clamp(this.leftSeconds, 0, 9999);
+        const mm = String(Math.floor(s / 60)).padStart(2, "0");
+        const ss = String(s % 60).padStart(2, "0");
+        this.hudTimer.textContent = `${mm}:${ss}`;
+      },
+
+      updateProgressHUD() {
+        const found = this.foundSet.size;
+        const pct = clamp((found / this.artifacts.length) * 100, 0, 100);
+        this.progressBar.style.width = `${pct.toFixed(0)}%`;
+      },
+
+      announceTarget(opts = {}) {
+        const a = this.artifacts[this.targetIndex];
+        if (!a) return;
+        const hint = (a.hints && a.hints[this.hintLevel]) ? a.hints[this.hintLevel] : "";
+        const stageTxt = `提示 ${this.hintLevel + 1}/3：${hint}`;
+
+        this.hudTitle.textContent = `目標：搵「${a.name}」`;
+        this.hudMsg.textContent = stageTxt;
+        this.floatingText.setAttribute("value", `搵：${a.name}`);
+
+        if (opts.speak === false) return;
+        speakCantonese(hint);
+      },
+
+      clearHintTimers() {
+        if (this._hintTimeouts && this._hintTimeouts.length) {
+          this._hintTimeouts.forEach(t => clearTimeout(t));
+        }
+        this._hintTimeouts = [];
+      },
+
+      startHintCycle(speakNow = false) {
+        this.clearHintTimers();
+        this.hintLevel = 0;
+        this.targetStartTimeMs = performance.now();
+        this.announceTarget({ speak: speakNow });
+
+        this._hintTimeouts.push(setTimeout(() => {
+          if (!this.started) return;
+          this.hintLevel = 1;
+          this.announceTarget({ speak: true });
+        }, this.hintIntervalMs));
+
+        this._hintTimeouts.push(setTimeout(() => {
+          if (!this.started) return;
+          this.hintLevel = 2;
+          this.announceTarget({ speak: true });
+        }, this.hintIntervalMs * 2));
+      },
+
+      spawnArtifacts() {
+        while (this.itemsRoot.firstChild) this.itemsRoot.removeChild(this.itemsRoot.firstChild);
+
+        const makeRingSpots = (count, rMin = 1.35, rMax = 2.65, y = 0.0) => {
+          const out = [];
+          const base = Math.random() * Math.PI * 2;
+          for (let i = 0; i < count; i++) {
+            const a = base + (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.28;
+            const r = rMin + Math.random() * (rMax - rMin);
+            const x = Math.cos(a) * r;
+            const z = Math.sin(a) * r;
+            const rotY = (-a * 180 / Math.PI) + 90;
+            out.push({ position: `${x.toFixed(2)} ${y.toFixed(2)} ${z.toFixed(2)}`, rotation: `0 ${rotY.toFixed(0)} 0` });
+          }
+          return out;
+        };
+
+        const pool = [
+          ...this.artifacts.map(a => ({ kind: "artifact", ...a })),
+          ...this.decoys.map(d => ({ kind: "decoy", ...d }))
+        ];
+
+        const spots = makeRingSpots(pool.length, 1.35, 2.65, 0.0);
+        shuffleInPlace(spots);
+
+        pool.forEach((a, i) => {
+          const wrapper = document.createElement("a-entity");
+          wrapper.setAttribute("id", `item_${a.id}`);
+
+          const s = spots[i] || { position: "0 0 0", rotation: "0 0 0" };
+          wrapper.setAttribute("position", s.position);
+          wrapper.setAttribute("rotation", s.rotation);
+          wrapper.setAttribute("class", "artifact");
+
+          const base = document.createElement("a-cylinder");
+          base.setAttribute("height", "0.08");
+          base.setAttribute("radius", a.kind === "decoy" ? "0.20" : "0.22");
+          base.setAttribute("material", "color:#111827; opacity:0.35; transparent:true; roughness:1");
+          base.setAttribute("position", "0 -0.12 0");
+
+          const body = document.createElement("a-entity");
+          body.setAttribute("class", "artifactBody");
+          body.setAttribute("position", "0 0.03 0");
+
+          a.make(body);
+
+          const hit = body.querySelector(".artifactHit") || body;
+          hit.classList.add("clickable");
+          hit.setAttribute("data-id", a.id);
+
+          onActivate(hit, () => this.onPick(a.id));
+
+          wrapper.appendChild(body);
+          wrapper.appendChild(base);
+          this.itemsRoot.appendChild(wrapper);
+        });
+      },
+
+      resetAllItems() {
+        this.artifacts.forEach(a => {
+          const el = document.querySelector(`#item_${a.id} .artifactHit`);
+          if (!el) return;
+          el.setAttribute("data-found", "0");
+          el.removeAttribute("animation__hint");
+          el.removeAttribute("animation__pulse");
+        });
+      },
+
+      applyTargetHighlight() {
+        this.artifacts.forEach(a => {
+          const el = document.querySelector(`#item_${a.id} .artifactHit`);
+          if (!el) return;
+          el.removeAttribute("animation__hint");
+        });
+
+        const target = this.artifacts[this.targetIndex];
+        if (!target) return;
+        const el = document.querySelector(`#item_${target.id} .artifactHit`);
+        if (!el) return;
+
+        el.setAttribute("animation__hint", "property: position; dir: alternate; dur: 900; loop: true; to: 0 0.07 0; easing: easeInOutSine;");
+      },
+
+      onPick(id) {
+        if (!this.started) {
+          this.startGame();
+          return;
+        }
+
+        const target = this.artifacts[this.targetIndex];
+        if (!target) return;
+
+        if (id !== target.id) {
+          const getWorldPos = (artifactId) => {
+            const wrap = document.getElementById(`item_${artifactId}`);
+            if (!wrap || !wrap.object3D) return null;
+            const v = new THREE.Vector3();
+            wrap.object3D.getWorldPosition(v);
+            return v;
+          };
+
+          const pWrong = getWorldPos(id);
+          const pTarget = getWorldPos(target.id);
+          let dist = 999;
+          if (pWrong && pTarget) dist = pWrong.distanceTo(pTarget);
+
+          let msg = "唔係呢件～再搵下！";
+          let speak = "唔係呢件，再搵下！";
+          let tone = 220;
+
+          if (dist < 0.75) {
+            msg = "你好近喇！留意下細節～";
+            speak = "你好近喇，留意下細節。";
+            tone = 392;
+          } else if (dist < 1.6) {
+            msg = "方向啱啱好，但仲未係。";
+            speak = "方向啱，但仲未係。";
+            tone = 294;
+          } else {
+            msg = "呢件同目標無關，轉個方向望下。";
+            speak = "呢件同目標無關，轉個方向望下。";
+            tone = 196;
+          }
+
+          showToast(msg);
+          beep.play(tone, 0.09, 0.05);
+          speakCantonese(speak);
+          return;
+        }
+
+        if (this.foundSet.has(id)) {
+          showToast("呢件你已經搵到喇～");
+          beep.play(520, 0.05, 0.03);
+          return;
+        }
+
+        this.foundSet.add(id);
+        this.hudFound.textContent = String(this.foundSet.size);
+        this.updateProgressHUD();
+
+        const el = document.querySelector(`#item_${id} .artifactHit`);
+        if (el) {
+          el.setAttribute("data-found", "1");
+          el.setAttribute("animation__pulse", "property: scale; dir: alternate; dur: 180; loop: true; to: 1.08 1.08 1.08; easing: easeOutQuad;");
+          setTimeout(() => el.removeAttribute("animation__pulse"), 700);
+        }
+
+        const dtSec = (performance.now() - this.targetStartTimeMs) / 1000;
+        let praise = "";
+        if (dtSec <= 6.5) praise = "嘩！你搵得超快！";
+        else if (dtSec <= 12) praise = "好叻！搵得好快！";
+
+        showToast(praise ? `搵到喇！${praise}` : "搵到喇！");
+        beep.play(988, 0.09, 0.06);
+
+        setInfoCard(true, target.infoTitle, target.infoBody);
+
+        if (this.foundSet.size >= this.artifacts.length) {
+          speakQueue([target.speak, praise, `你搵到${target.name}喇！`], () => this.endGame(true));
+          return;
+        }
+
+        const nextArtifact = this.artifacts[clamp(this.targetIndex + 1, 0, this.artifacts.length - 1)];
+
+        this.targetIndex = clamp(this.targetIndex + 1, 0, this.artifacts.length - 1);
+        this.applyTargetHighlight();
+        this.clearHintTimers();
+        this.hintLevel = 0;
+
+        speakQueue([
+          target.speak,
+          praise,
+          `你搵到${target.name}喇！`,
+          `下一件文物簡介：${nextArtifact.extraIntro || ''}`,
+          "準備好未？下一件開始喇。"
+        ], () => {
+          this.startHintCycle(true);
+        });
+      },
+
+      // GLB builders
+      buildCabbage(root) { this.spawnGLB(root, "#mdl-cabbage", { targetHeight: 0.28, yOffset: 0.00, rotY: 180, tint: "#4ade80" }); },
+      buildMeatStone(root) { this.spawnGLB(root, "#mdl-meat", { targetHeight: 0.25, yOffset: 0.00, rotY: 180, tint: "#fb7185" }); },
+      buildChickenCup(root) { this.spawnGLB(root, "#mdl-chicken", { targetHeight: 0.23, yOffset: 0.00, rotY: 180, tint: "#e5e7eb" }); },
+
+      // Decoys
+      buildDecoyGreenTall(root) {
+        if (this.trySpawnGLB(root, "#mdl-fake01", { targetHeight: 0.20, yOffset: 0.00, rotY: 180 })) return;
+        const stem = document.createElement("a-cylinder");
+        stem.setAttribute("height", "0.26");
+        stem.setAttribute("radius", "0.06");
+        stem.setAttribute("material", "color:#22c55e; roughness:0.7;");
+        stem.setAttribute("position", "0 0.06 0");
+        const top = document.createElement("a-sphere");
+        top.setAttribute("class", "artifactHit");
+        top.setAttribute("radius", "0.10");
+        top.setAttribute("material", "color:#34d399; roughness:0.6;");
+        top.setAttribute("position", "0 0.18 0");
+        root.appendChild(stem); root.appendChild(top);
+      },
+
+      buildDecoyGreenGem(root) {
+        if (this.trySpawnGLB(root, "#mdl-fake02", { targetHeight: 0.18, yOffset: 0.00, rotY: 180 })) return;
+        const gem = document.createElement("a-octahedron");
+        gem.setAttribute("class", "artifactHit");
+        gem.setAttribute("radius", "0.12");
+        gem.setAttribute("material", "color:#16a34a; roughness:0.25; metalness:0.25;");
+        gem.setAttribute("animation__spin", "property: rotation; to: 0 360 0; loop: true; dur: 2600; easing: linear;");
+        root.appendChild(gem);
+      },
+
+      buildDecoyMeatBlock(root) {
+        if (this.trySpawnGLB(root, "#mdl-fake03", { targetHeight: 0.18, yOffset: 0.00, rotY: 180 })) return;
+        const block = document.createElement("a-box");
+        block.setAttribute("class", "artifactHit");
+        block.setAttribute("width", "0.20");
+        block.setAttribute("height", "0.12");
+        block.setAttribute("depth", "0.18");
+        block.setAttribute("material", "color:#fb7185; roughness:0.85;");
+        const stripe = document.createElement("a-box");
+        stripe.setAttribute("width", "0.20");
+        stripe.setAttribute("height", "0.05");
+        stripe.setAttribute("depth", "0.18");
+        stripe.setAttribute("position", "0 0.06 0");
+        stripe.setAttribute("material", "color:#78350f; roughness:0.9; opacity:0.95; transparent:true;");
+        root.appendChild(block); root.appendChild(stripe);
+      },
+
+      buildDecoyBrownStone(root) {
+        if (this.trySpawnGLB(root, "#mdl-fake04", { targetHeight: 0.18, yOffset: 0.00, rotY: 180 })) return;
+        const stone = document.createElement("a-dodecahedron");
+        stone.setAttribute("class", "artifactHit");
+        stone.setAttribute("radius", "0.13");
+        stone.setAttribute("material", "color:#a16207; roughness:1.0;");
+        root.appendChild(stone);
+      },
+
+      buildDecoyTealPillar(root) {
+        const fakeIds = ["#mdl-fake01", "#mdl-fake02", "#mdl-fake03", "#mdl-fake04"];
+        const pick = fakeIds[Math.floor(Math.random() * fakeIds.length)];
+        if (this.trySpawnGLB(root, pick, { targetHeight: 0.22, yOffset: 0.00, rotY: 180 })) return;
+        const cyl = document.createElement("a-cylinder");
+        cyl.setAttribute("class", "artifactHit");
+        cyl.setAttribute("radius", "0.10");
+        cyl.setAttribute("height", "0.26");
+        cyl.setAttribute("material", "color:#0d9488; roughness:0.8; metalness:0.1;");
+        root.appendChild(cyl);
+      },
+
+      buildDecoyPlate(root) {
+        const plate2 = document.createElement("a-plane");
+        plate2.setAttribute("class", "artifactHit");
+        plate2.setAttribute("width", "0.20");
+        plate2.setAttribute("height", "0.20");
+        plate2.setAttribute("material", "color:#e0f2fe; opacity:0.18; transparent:true;");
+        plate2.setAttribute("position", "0 0.06 0.02");
+        const mark2 = document.createElement("a-text");
+        mark2.setAttribute("value", "?");
+        mark2.setAttribute("align", "center");
+        mark2.setAttribute("width", "0.8");
+        mark2.setAttribute("position", "0 0.06 0.03");
+        mark2.setAttribute("color", "#EAF2FF");
+        mark2.setAttribute("opacity", "0.6");
+        root.appendChild(plate2); root.appendChild(mark2);
+      },
+
+      // GLB helper
+      trySpawnGLB(root, assetId, opts) {
+        const asset = document.querySelector(assetId);
+        if (!asset) return false;
+        const src = asset.getAttribute("src");
+        if (!src) return false;
+        this.spawnGLB(root, assetId, opts);
+        return true;
+      },
+
+      spawnGLB(root, assetId, { targetHeight = 0.20, yOffset = 0.0, rotY = 180, tint = "#cbd5e1" } = {}) {
+        const model = document.createElement("a-gltf-model");
+        model.setAttribute("src", assetId);
+        model.setAttribute("class", "artifactHit");
+        model.setAttribute("rotation", `0 ${rotY} 0`);
+        model.setAttribute("position", `0 ${yOffset} 0`);
+        model.setAttribute("shadow", "cast: false; receive: false");
+
+        model.addEventListener("model-loaded", () => {
+          try {
+            const obj = model.getObject3D("mesh");
+            if (!obj) return;
+
+            obj.traverse((n) => {
+              if (!n.isMesh) return;
+              n.frustumCulled = false;
+              const m = n.material;
+              if (!m) return;
+              m.side = THREE.DoubleSide;
+            });
+
+            obj.traverse((n) => {
+              if (!n.isMesh) return;
+              const m = n.material;
+              if (!m) return;
+
+              if (typeof m.metalness === 'number') m.metalness = 0.0;
+              if (typeof m.roughness === 'number') m.roughness = Math.max(m.roughness, 0.7);
+
+              if (!m.map && m.color) {
+                try { m.color.set(tint); } catch (e) {}
+              }
+
+              if (m.emissive) {
+                m.emissive.setHex(0x111111);
+                m.emissiveIntensity = 0.22;
+              }
+
+              m.needsUpdate = true;
+            });
+
+            obj.position.set(0, 0, 0);
+            obj.scale.set(1, 1, 1);
+
+            model.object3D.updateWorldMatrix(true, true);
+            obj.updateWorldMatrix(true, true);
+
+            const box0 = new THREE.Box3().setFromObject(obj);
+            const size0 = new THREE.Vector3();
+            box0.getSize(size0);
+            const h0 = Math.max(size0.y, 0.0001);
+            const s = targetHeight / h0;
+
+            model.object3D.scale.set(s, s, s);
+            model.object3D.updateWorldMatrix(true, true);
+            obj.updateWorldMatrix(true, true);
+
+            const box1 = new THREE.Box3().setFromObject(obj);
+            const center1 = new THREE.Vector3();
+            box1.getCenter(center1);
+            obj.position.sub(center1);
+            obj.updateWorldMatrix(true, true);
+
+            const box2 = new THREE.Box3().setFromObject(obj);
+            const minY = box2.min.y;
+            obj.position.y -= minY;
+            obj.updateWorldMatrix(true, true);
+
+            obj.traverse((n) => {
+              if (!n.isMesh) return;
+              const m = n.material;
+              if (!m) return;
+
+              if (typeof m.metalness === 'number') m.metalness = 0.0;
+              if (typeof m.roughness === 'number') m.roughness = Math.max(m.roughness, 0.7);
+
+              if (m.color && m.color.getHexString && m.color.getHexString() === '000000') {
+                m.color.setHex(0x777777);
+              }
+
+              if (m.emissive) {
+                m.emissive.setHex(0x111111);
+                m.emissiveIntensity = 0.22;
+              }
+
+              m.needsUpdate = true;
+            });
+          } catch (err) {
+            console.warn('[spawnGLB] model post-process failed:', err);
+          }
+        });
+
+        model.addEventListener('model-error', () => {
+          showToast('⚠️ 有模型載入失敗：檢查 3dModel/ 路徑同檔名大小寫');
+        });
+
+        root.appendChild(model);
+      }
+    });
+
+    console.log('[boot] hunt-game script loaded OK');
+  </script>
+</body>
+</html>
