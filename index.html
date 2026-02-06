@@ -27,6 +27,7 @@
       z-index: 9998;
     }
     #overlay:xr-overlay { display:block; }
+    body.xr-nodom #overlay { display: none; }
 
     #hud {
       position: absolute;
@@ -163,8 +164,15 @@
 
     <a-entity id="rig">
       <a-camera position="0 1.6 0" look-controls="enabled: true"
-                cursor="rayOrigin: mouse; fuse: false"
-                raycaster="objects: .clickable; far: 10; interval: 0">
+      cursor="rayOrigin: mouse; fuse: false"
+      raycaster="objects: .clickable; far: 10; interval: 0">
+        <!-- VR fallback HUD (head-locked) when DOM Overlay is unavailable -->
+        <a-entity id="hud3d" position="0 -0.05 -0.9" scale="0.75 0.75 0.75" visible="false">
+          <a-plane width="0.85" height="0.32" color="#0b1220" opacity="0.78" radius="0.04" material="shader: flat"></a-plane>
+          <a-text id="hud3dTitle" value="故宮尋寶" position="-0.38 0.08 0.01" width="1.6" color="#EAF2FF" opacity="0.95"></a-text>
+          <a-text id="hud3dMsg" value="撳一下開始 / 按 Trigger" position="-0.38 -0.02 0.01" width="1.8" color="#cfe1ff" opacity="0.92"></a-text>
+          <a-text id="hud3dTimer" value="⏱ 03:30｜已找到 0/3" position="-0.38 -0.12 0.01" width="1.8" color="#9dd5ff" opacity="0.9"></a-text>
+        </a-entity>
       </a-camera>
     </a-entity>
 
@@ -334,6 +342,8 @@
         return v && v.length > 0;
       } catch (e) { return false; }
     };
+    let speakBusy = false;
+    const setSpeakBusy = (v) => { speakBusy = !!v; };
 
     function speakCantonese(text) {
       if (!text) return false;
@@ -364,6 +374,7 @@
         if (typeof onDone === 'function') onDone();
         return;
       }
+      setSpeakBusy(true);
 
       const nativeOK = hasNativeTTS();
 
@@ -372,6 +383,7 @@
         let i = 0;
         const next = () => {
           if (i >= list.length) {
+            setSpeakBusy(false);
             if (typeof onDone === 'function') onDone();
             return;
           }
@@ -393,6 +405,7 @@
       let i = 0;
       const nextAudio = () => {
         if (i >= list.length) {
+          setSpeakBusy(false);
           if (typeof onDone === 'function') onDone();
           return;
         }
@@ -438,6 +451,11 @@
         this.progressBar = document.getElementById("progressBar");
         this.floatingText = document.querySelector("#floatingText a-text");
         this.itemsRoot = document.getElementById("items");
+        this.hud3dTitle = document.getElementById("hud3dTitle");
+        this.hud3dMsg = document.getElementById("hud3dMsg");
+        this.hud3dTimer = document.getElementById("hud3dTimer");
+        this.hud3dRoot = document.getElementById("hud3d");
+        this.hasDomOverlay = true;
 
         this.huntRootEl = this.el;
 
@@ -516,9 +534,25 @@
         const scene = this.el.sceneEl;
         if (scene) {
           scene.addEventListener('enter-vr', () => {
+            try {
+              const session = scene.renderer?.xr?.getSession?.();
+              const hasDom = !!(session && session.domOverlayState && session.domOverlayState.type);
+              this.hasDomOverlay = hasDom;
+              this.setHUD3DVisible(!hasDom);
+              if (hasDom) document.body.classList.remove("xr-nodom");
+            } catch (e) {
+              this.hasDomOverlay = false;
+              this.setHUD3DVisible(true);
+            }
             this.centerHuntOnPlayer();
             this.spawnArtifacts();
             this.applyTargetHighlight();
+          });
+
+          scene.addEventListener('exit-vr', () => {
+            this.hasDomOverlay = true;
+            this.setHUD3DVisible(false);
+            document.body.classList.remove("xr-nodom");
           });
         }
 
@@ -548,6 +582,8 @@
         this.updateProgressHUD();
         this.hudFound.textContent = "0";
         this.floatingText.setAttribute("value", "撳一下開始，搵到目標就點佢");
+        this.updateHUD3D("故宮尋寶", "撳一下開始 / 按 Trigger", "⏱ 03:30｜已找到 0/3");
+        this.setHUD3DVisible(!this.hasDomOverlay);
       },
 
       startGame() {
@@ -567,6 +603,7 @@
 
         beep.play(784, 0.07, 0.05);
         showToast("開始！搵第一樣～");
+        this.updateHUD3D("遊戲開始", "留意提示，點擊正確文物", this.hud3dTimer?.getAttribute("value") || "");
 
         this.startHintCycle(true);
 
@@ -598,8 +635,10 @@
         if (success) {
           this.showCollection();
           sayWithFallback("完成喇！你已經收集咗三件文物。好叻！", true);
+          this.updateHUD3D("完成！", "恭喜完成收藏！按 Trigger 重玩", this.hud3dTimer?.getAttribute("value") || "");
         } else {
           sayWithFallback("時間到喇，下次再挑戰。", true);
+          this.updateHUD3D("時間到", "按 Trigger / click 重新開始", this.hud3dTimer?.getAttribute("value") || "");
         }
       },
 
@@ -647,12 +686,32 @@
         const mm = String(Math.floor(s / 60)).padStart(2, "0");
         const ss = String(s % 60).padStart(2, "0");
         this.hudTimer.textContent = `${mm}:${ss}`;
+        this.updateHUD3DTimer();
       },
 
       updateProgressHUD() {
         const found = this.foundSet.size;
         const pct = clamp((found / this.artifacts.length) * 100, 0, 100);
         this.progressBar.style.width = `${pct.toFixed(0)}%`;
+        this.updateHUD3DTimer();
+      },
+
+      updateHUD3D(title, msg, timerLine) {
+        if (this.hud3dTitle && typeof title === "string") this.hud3dTitle.setAttribute("value", title);
+        if (this.hud3dMsg && typeof msg === "string") this.hud3dMsg.setAttribute("value", msg);
+        if (this.hud3dTimer && typeof timerLine === "string") this.hud3dTimer.setAttribute("value", timerLine);
+      },
+
+      setHUD3DVisible(show) {
+        if (this.hud3dRoot) this.hud3dRoot.setAttribute("visible", !!show);
+        document.body.classList.toggle("xr-nodom", !!show);
+      },
+
+      updateHUD3DTimer() {
+        if (!this.hud3dTimer) return;
+        const mmss = this.hudTimer?.textContent || "00:00";
+        const found = this.foundSet.size;
+        this.hud3dTimer.setAttribute("value", `⏱ ${mmss}｜已找到 ${found}/3`);
       },
 
       announceTarget(opts = {}) {
@@ -664,6 +723,7 @@
         this.hudTitle.textContent = `目標：搵「${a.name}」`;
         this.hudMsg.textContent = stageTxt;
         this.floatingText.setAttribute("value", `搵：${a.name}`);
+        this.updateHUD3D(`目標：${a.name}`, stageTxt, this.hud3dTimer?.getAttribute("value") || "");
 
         if (opts.speak === false) return;
         sayWithFallback(hint, true);
@@ -779,6 +839,10 @@
       },
 
       onPick(id) {
+        if (speakBusy) {
+          showToast("請先聽完講解，再操作");
+          return;
+        }
         if (!this.started) {
           this.startGame();
           return;
