@@ -173,6 +173,8 @@
         <a-entity id="hud3d" position="0 -0.08 -0.85" scale="0.42 0.42 0.42" visible="false">
           <a-plane id="hud3dPanel" width="0.75" height="0.32" color="#0f172a" opacity="0.9" radius="0.04"
                    material="shader: flat; src: #hudCanvas; transparent: true"></a-plane>
+          <!-- Ultimate fallback text to ensure always readable in case canvas fails -->
+          <a-text id="hud3dFallback" value="" align="center" width="1.8" color="#EAF2FF" opacity="0.95" position="0 0.0 0.015"></a-text>
           <!-- Invisible hit areas for buttons; labels are drawn on canvas -->
           <a-plane id="hud3dBtnPrimary" class="clickable" width="0.30" height="0.10" position="0.16 -0.12 0.012"
                    color="#10b981" opacity="0.01" radius="0.022"></a-plane>
@@ -467,6 +469,7 @@
         this.hudCtx = this.hudCanvas?.getContext?.("2d") || null;
         this.hudTex = null;
         this.hudButtonLabel = "開始";
+        this.hud3dFallback = document.getElementById("hud3dFallback");
         this.hasDomOverlay = true;
 
         this.huntRootEl = this.el;
@@ -736,6 +739,7 @@
         if (this.hud3dTitleAlt) this.hud3dTitleAlt.setAttribute("visible", true);
         if (this.hud3dMsgAlt) this.hud3dMsgAlt.setAttribute("visible", true);
         if (this.hud3dTimerAlt) this.hud3dTimerAlt.setAttribute("visible", true);
+        if (this.hud3dFallback) this.hud3dFallback.setAttribute("value", `${title}\n${msg}\n${timerLine || ""}`);
         this.redrawHUDCanvas({ title, msg, timer: timerLine });
       },
 
