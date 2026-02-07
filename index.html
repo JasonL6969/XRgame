@@ -125,6 +125,7 @@
 </head>
 
 <body>
+  <canvas id="hudCanvas" width="1024" height="512" style="display:none;"></canvas>
   <div id="overlay">
     <div id="hud">
       <div id="row">
@@ -170,23 +171,13 @@
       raycaster="objects: .clickable; far: 10; interval: 0">
         <!-- VR fallback HUD (head-locked) when DOM Overlay is unavailable -->
         <a-entity id="hud3d" position="0 -0.08 -0.85" scale="0.42 0.42 0.42" visible="false">
-          <a-plane id="hud3dPanel" width="0.70" height="0.28" color="#0f172a" opacity="0.9" radius="0.04" material="shader: flat"></a-plane>
-          <!-- troika text (preferred for CJK), fallback a-text duplicates to avoid blank in some browsers -->
-          <a-troika-text id="hud3dTitle" value="故宮尋寶" position="0 0.08 0.02" align="center" anchor="center" color="#EAF2FF" opacity="0.98" font-size="0.065" max-width="0.65" material="depthTest:false;"></a-troika-text>
-          <a-text id="hud3dTitleAlt" value="故宮尋寶" position="0 0.08 0.025" align="center" width="1.6" color="#EAF2FF" opacity="0.95"></a-text>
-
-          <a-troika-text id="hud3dMsg" value="按 Trigger / 點擊開始" position="0 0.02 0.02" align="center" anchor="center" color="#cfe1ff" opacity="0.97" font-size="0.052" max-width="0.72" material="depthTest:false;"></a-troika-text>
-          <a-text id="hud3dMsgAlt" value="按 Trigger / 點擊開始" position="0 0.02 0.025" align="center" width="1.7" color="#cfe1ff" opacity="0.92"></a-text>
-
-          <a-troika-text id="hud3dTimer" value="⏱ 03:30｜已找到 0/3" position="0 -0.045 0.02" align="center" anchor="center" color="#9dd5ff" opacity="0.94" font-size="0.050" max-width="0.72" material="depthTest:false;"></a-troika-text>
-          <a-text id="hud3dTimerAlt" value="⏱ 03:30｜已找到 0/3" position="0 -0.045 0.025" align="center" width="1.7" color="#9dd5ff" opacity="0.9"></a-text>
-
-          <a-plane id="hud3dBtnPrimary" class="clickable" width="0.28" height="0.095" position="0.16 -0.12 0.012" color="#10b981" opacity="0.96" radius="0.022"></a-plane>
-          <a-troika-text id="hud3dBtnPrimaryLabel" value="開始" align="center" anchor="center" position="0.16 -0.12 0.018" color="#0b1220" opacity="0.99" font-size="0.048" max-width="0.55" material="depthTest:false;"></a-troika-text>
-          <a-text id="hud3dBtnPrimaryLabelAlt" value="開始" align="center" width="0.65" position="0.16 -0.12 0.023" color="#0b1220" opacity="0.92"></a-text>
-          <a-plane id="hud3dBtnSecondary" class="clickable" width="0.28" height="0.095" position="-0.16 -0.12 0.012" color="#1f2937" opacity="0.82" radius="0.022" visible="false"></a-plane>
-          <a-troika-text id="hud3dBtnSecondaryLabel" value="再玩一次" align="center" anchor="center" position="-0.16 -0.12 0.018" color="#EAF2FF" opacity="0.97" font-size="0.048" max-width="0.55" visible="false" material="depthTest:false;"></a-troika-text>
-          <a-text id="hud3dBtnSecondaryLabelAlt" value="再玩一次" align="center" width="0.65" position="-0.16 -0.12 0.023" color="#EAF2FF" opacity="0.9" visible="true"></a-text>
+          <a-plane id="hud3dPanel" width="0.75" height="0.32" color="#0f172a" opacity="0.9" radius="0.04"
+                   material="shader: flat; src: #hudCanvas; transparent: true"></a-plane>
+          <!-- Invisible hit areas for buttons; labels are drawn on canvas -->
+          <a-plane id="hud3dBtnPrimary" class="clickable" width="0.30" height="0.10" position="0.16 -0.12 0.012"
+                   color="#10b981" opacity="0.01" radius="0.022"></a-plane>
+          <a-plane id="hud3dBtnSecondary" class="clickable" width="0.30" height="0.10" position="-0.16 -0.12 0.012"
+                   color="#1f2937" opacity="0.01" radius="0.022" visible="false"></a-plane>
         </a-entity>
       </a-camera>
     </a-entity>
@@ -472,13 +463,10 @@
         this.hud3dRoot = document.getElementById("hud3d");
         this.hud3dBtnPrimary = document.getElementById("hud3dBtnPrimary");
         this.hud3dBtnSecondary = document.getElementById("hud3dBtnSecondary");
-        this.hud3dBtnPrimaryLabel = document.getElementById("hud3dBtnPrimaryLabel");
-        this.hud3dBtnSecondaryLabel = document.getElementById("hud3dBtnSecondaryLabel");
-        this.hud3dTitleAlt = document.getElementById("hud3dTitleAlt");
-        this.hud3dMsgAlt = document.getElementById("hud3dMsgAlt");
-        this.hud3dTimerAlt = document.getElementById("hud3dTimerAlt");
-        this.hud3dBtnPrimaryLabelAlt = document.getElementById("hud3dBtnPrimaryLabelAlt");
-        this.hud3dBtnSecondaryLabelAlt = document.getElementById("hud3dBtnSecondaryLabelAlt");
+        this.hudCanvas = document.getElementById("hudCanvas");
+        this.hudCtx = this.hudCanvas?.getContext?.("2d") || null;
+        this.hudTex = null;
+        this.hudButtonLabel = "開始";
         this.hasDomOverlay = true;
 
         this.huntRootEl = this.el;
@@ -726,6 +714,7 @@
         const ss = String(s % 60).padStart(2, "0");
         this.hudTimer.textContent = `${mm}:${ss}`;
         this.updateHUD3DTimer();
+        this.redrawHUDCanvas();
       },
 
       updateProgressHUD() {
@@ -733,6 +722,7 @@
         const pct = clamp((found / this.artifacts.length) * 100, 0, 100);
         this.progressBar.style.width = `${pct.toFixed(0)}%`;
         this.updateHUD3DTimer();
+        this.redrawHUDCanvas();
       },
 
       updateHUD3D(title, msg, timerLine) {
@@ -746,6 +736,7 @@
         if (this.hud3dTitleAlt) this.hud3dTitleAlt.setAttribute("visible", true);
         if (this.hud3dMsgAlt) this.hud3dMsgAlt.setAttribute("visible", true);
         if (this.hud3dTimerAlt) this.hud3dTimerAlt.setAttribute("visible", true);
+        this.redrawHUDCanvas({ title, msg, timer: timerLine });
       },
 
       configureHUD3DButtons({ state }) {
@@ -758,12 +749,14 @@
           this.hud3dBtnSecondary.setAttribute("visible", false);
           this.hud3dBtnSecondaryLabel.setAttribute("visible", false);
           if (this.hud3dBtnSecondaryLabelAlt) this.hud3dBtnSecondaryLabelAlt.setAttribute("visible", false);
+          this.hudButtonLabel = "開始";
         } else if (state === "inGame") {
           this.hud3dBtnPrimary.setAttribute("visible", false);
           this.hud3dBtnSecondary.setAttribute("visible", false);
           this.hud3dBtnSecondaryLabel.setAttribute("visible", false);
           if (this.hud3dBtnPrimaryLabelAlt) this.hud3dBtnPrimaryLabelAlt.setAttribute("visible", false);
           if (this.hud3dBtnSecondaryLabelAlt) this.hud3dBtnSecondaryLabelAlt.setAttribute("visible", false);
+          this.hudButtonLabel = "";
         } else if (state === "end") {
           this.hud3dBtnPrimary.setAttribute("visible", true);
           this.hud3dBtnPrimaryLabel.setAttribute("value", "再玩一次");
@@ -772,15 +765,66 @@
           this.hud3dBtnSecondary.setAttribute("visible", false);
           this.hud3dBtnSecondaryLabel.setAttribute("visible", false);
           if (this.hud3dBtnSecondaryLabelAlt) this.hud3dBtnSecondaryLabelAlt.setAttribute("visible", false);
+          this.hudButtonLabel = "再玩一次";
         }
         // 確保備援文字跟著主文字顯示狀態
         if (this.hud3dBtnPrimaryLabelAlt) this.hud3dBtnPrimaryLabelAlt.setAttribute("visible", this.hud3dBtnPrimary.getAttribute("visible"));
         if (this.hud3dBtnSecondaryLabelAlt) this.hud3dBtnSecondaryLabelAlt.setAttribute("visible", this.hud3dBtnSecondary.getAttribute("visible"));
+        this.redrawHUDCanvas();
       },
 
       setHUD3DVisible(show) {
         if (this.hud3dRoot) this.hud3dRoot.setAttribute("visible", !!show);
         document.body.classList.toggle("xr-nodom", !!show);
+        if (show) this.redrawHUDCanvas();
+      },
+
+      redrawHUDCanvas(manualData = {}) {
+        if (!this.hudCtx || !this.hudCanvas || !this.hud3dPanel) return;
+        // lazy acquire texture
+        if (!this.hudTex) {
+          const mesh = this.hud3dPanel.getObject3D("mesh");
+          if (mesh && mesh.material && mesh.material.map) {
+            this.hudTex = mesh.material.map;
+          }
+        }
+        const ctx = this.hudCtx;
+        const w = this.hudCanvas.width;
+        const h = this.hudCanvas.height;
+        ctx.clearRect(0,0,w,h);
+        // background panel
+        ctx.fillStyle = "rgba(15,23,42,0.9)";
+        ctx.fillRect(0,0,w,h);
+        ctx.fillStyle = "#FFFFFF";
+        // title
+        const title = manualData.title || this.hud3dTitle?.getAttribute("value") || "故宮尋寶";
+        ctx.font = 'bold 58px "Noto Sans TC", "PingFang TC", system-ui';
+        ctx.fillStyle = "#EAF2FF";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(title, w/2, h*0.28);
+        // message
+        const msg = manualData.msg || this.hud3dMsg?.getAttribute("value") || "按 Trigger / 點擊開始";
+        ctx.font = '46px "Noto Sans TC", "PingFang TC", system-ui';
+        ctx.fillStyle = "#cfe1ff";
+        ctx.fillText(msg, w/2, h*0.46);
+        // timer
+        const timer = manualData.timer || this.hud3dTimer?.getAttribute("value") || "";
+        ctx.font = '44px "Noto Sans TC", "PingFang TC", system-ui';
+        ctx.fillStyle = "#9dd5ff";
+        ctx.fillText(timer, w/2, h*0.62);
+        // button
+        const btn = manualData.btn || this.hudButtonLabel || "";
+        if (btn) {
+          const bw = w*0.32, bh = h*0.16;
+          const bx = w*0.60 - bw/2, by = h*0.72 - bh/2;
+          ctx.fillStyle = "#10b981";
+          ctx.fillRect(bx, by, bw, bh);
+          ctx.font = 'bold 46px "Noto Sans TC", "PingFang TC", system-ui';
+          ctx.fillStyle = "#0b1220";
+          ctx.fillText(btn, bx + bw/2, by + bh/2 + 4);
+        }
+        if (this.hudTex) this.hudTex.needsUpdate = true;
       },
 
       updateHUD3DTimer() {
@@ -788,6 +832,7 @@
         const mmss = this.hudTimer?.textContent || "00:00";
         const found = this.foundSet.size;
         this.hud3dTimer.setAttribute("value", `⏱ ${mmss}｜已找到 ${found}/3`);
+        this.redrawHUDCanvas();
       },
 
       announceTarget(opts = {}) {
