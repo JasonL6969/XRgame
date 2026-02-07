@@ -167,15 +167,15 @@
       cursor="rayOrigin: mouse; fuse: false"
       raycaster="objects: .clickable; far: 10; interval: 0">
         <!-- VR fallback HUD (head-locked) when DOM Overlay is unavailable -->
-        <a-entity id="hud3d" position="0 -0.12 -0.95" scale="0.45 0.45 0.45" visible="false">
-          <a-plane id="hud3dPanel" width="0.70" height="0.28" color="#0b1220" opacity="0.85" radius="0.035" material="shader: flat"></a-plane>
-          <a-text id="hud3dTitle" value="故宮尋寶" position="0 0.08 0.01" align="center" width="1.4" color="#EAF2FF" opacity="0.98"></a-text>
-          <a-text id="hud3dMsg" value="按 Trigger / 點擊開始" position="0 0.02 0.01" align="center" width="1.6" color="#cfe1ff" opacity="0.95"></a-text>
-          <a-text id="hud3dTimer" value="⏱ 03:30｜已找到 0/3" position="0 -0.04 0.01" align="center" width="1.6" color="#9dd5ff" opacity="0.92"></a-text>
-          <a-plane id="hud3dBtnPrimary" class="clickable" width="0.30" height="0.10" position="0.18 -0.11 0.012" color="#10b981" opacity="0.95" radius="0.02"></a-plane>
-          <a-text id="hud3dBtnPrimaryLabel" value="開始" align="center" width="0.55" position="0.18 -0.11 0.015" color="#0b1220" opacity="0.98"></a-text>
-          <a-plane id="hud3dBtnSecondary" class="clickable" width="0.30" height="0.10" position="-0.18 -0.11 0.012" color="#1f2937" opacity="0.80" radius="0.02" visible="false"></a-plane>
-          <a-text id="hud3dBtnSecondaryLabel" value="再玩一次" align="center" width="0.55" position="-0.18 -0.11 0.015" color="#EAF2FF" opacity="0.95" visible="false"></a-text>
+        <a-entity id="hud3d" position="0 -0.08 -0.85" scale="0.50 0.50 0.50" visible="false">
+          <a-plane id="hud3dPanel" width="0.74" height="0.30" color="#0f172a" opacity="0.88" radius="0.04" material="shader: flat"></a-plane>
+          <a-text id="hud3dTitle" value="故宮尋寶" position="0 0.10 0.01" align="center" width="1.5" color="#EAF2FF" opacity="0.98" wrap-count="18"></a-text>
+          <a-text id="hud3dMsg" value="按 Trigger / 點擊開始" position="0 0.03 0.01" align="center" width="1.7" color="#cfe1ff" opacity="0.97" wrap-count="24"></a-text>
+          <a-text id="hud3dTimer" value="⏱ 03:30｜已找到 0/3" position="0 -0.03 0.01" align="center" width="1.7" color="#9dd5ff" opacity="0.94" wrap-count="24"></a-text>
+          <a-plane id="hud3dBtnPrimary" class="clickable" width="0.30" height="0.10" position="0.18 -0.11 0.012" color="#10b981" opacity="0.96" radius="0.022"></a-plane>
+          <a-text id="hud3dBtnPrimaryLabel" value="開始" align="center" width="0.6" position="0.18 -0.11 0.015" color="#0b1220" opacity="0.99"></a-text>
+          <a-plane id="hud3dBtnSecondary" class="clickable" width="0.30" height="0.10" position="-0.18 -0.11 0.012" color="#1f2937" opacity="0.82" radius="0.022" visible="false"></a-plane>
+          <a-text id="hud3dBtnSecondaryLabel" value="再玩一次" align="center" width="0.6" position="-0.18 -0.11 0.015" color="#EAF2FF" opacity="0.97" visible="false"></a-text>
         </a-entity>
       </a-camera>
     </a-entity>
