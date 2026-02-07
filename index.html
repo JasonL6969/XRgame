@@ -167,11 +167,15 @@
       cursor="rayOrigin: mouse; fuse: false"
       raycaster="objects: .clickable; far: 10; interval: 0">
         <!-- VR fallback HUD (head-locked) when DOM Overlay is unavailable -->
-        <a-entity id="hud3d" position="0 -0.05 -0.9" scale="0.75 0.75 0.75" visible="false">
-          <a-plane width="0.85" height="0.32" color="#0b1220" opacity="0.78" radius="0.04" material="shader: flat"></a-plane>
-          <a-text id="hud3dTitle" value="故宮尋寶" position="-0.38 0.08 0.01" width="1.6" color="#EAF2FF" opacity="0.95"></a-text>
-          <a-text id="hud3dMsg" value="撳一下開始 / 按 Trigger" position="-0.38 -0.02 0.01" width="1.8" color="#cfe1ff" opacity="0.92"></a-text>
-          <a-text id="hud3dTimer" value="⏱ 03:30｜已找到 0/3" position="-0.38 -0.12 0.01" width="1.8" color="#9dd5ff" opacity="0.9"></a-text>
+        <a-entity id="hud3d" position="0 -0.08 -0.95" scale="0.60 0.60 0.60" visible="false">
+          <a-plane id="hud3dPanel" width="0.92" height="0.42" color="#0b1220" opacity="0.82" radius="0.04" material="shader: flat"></a-plane>
+          <a-text id="hud3dTitle" value="故宮尋寶" position="-0.42 0.13 0.01" width="1.6" color="#EAF2FF" opacity="0.95"></a-text>
+          <a-text id="hud3dMsg" value="按 Trigger / 點擊開始" position="-0.42 0.03 0.01" width="1.8" color="#cfe1ff" opacity="0.92"></a-text>
+          <a-text id="hud3dTimer" value="⏱ 03:30｜已找到 0/3" position="-0.42 -0.07 0.01" width="1.8" color="#9dd5ff" opacity="0.9"></a-text>
+          <a-plane id="hud3dBtnPrimary" class="clickable" width="0.32" height="0.11" position="0.28 -0.16 0.01" color="#10b981" opacity="0.92" radius="0.02"></a-plane>
+          <a-text id="hud3dBtnPrimaryLabel" value="開始" align="center" width="0.6" position="0.28 -0.16 0.02" color="#0b1220" opacity="0.95"></a-text>
+          <a-plane id="hud3dBtnSecondary" class="clickable" width="0.32" height="0.11" position="-0.12 -0.16 0.01" color="#1f2937" opacity="0.75" radius="0.02" visible="false"></a-plane>
+          <a-text id="hud3dBtnSecondaryLabel" value="再玩一次" align="center" width="0.6" position="-0.12 -0.16 0.02" color="#EAF2FF" opacity="0.92" visible="false"></a-text>
         </a-entity>
       </a-camera>
     </a-entity>
@@ -455,6 +459,10 @@
         this.hud3dMsg = document.getElementById("hud3dMsg");
         this.hud3dTimer = document.getElementById("hud3dTimer");
         this.hud3dRoot = document.getElementById("hud3d");
+        this.hud3dBtnPrimary = document.getElementById("hud3dBtnPrimary");
+        this.hud3dBtnSecondary = document.getElementById("hud3dBtnSecondary");
+        this.hud3dBtnPrimaryLabel = document.getElementById("hud3dBtnPrimaryLabel");
+        this.hud3dBtnSecondaryLabel = document.getElementById("hud3dBtnSecondaryLabel");
         this.hasDomOverlay = true;
 
         this.huntRootEl = this.el;
@@ -584,6 +592,18 @@
         this.floatingText.setAttribute("value", "撳一下開始，搵到目標就點佢");
         this.updateHUD3D("故宮尋寶", "撳一下開始 / 按 Trigger", "⏱ 03:30｜已找到 0/3");
         this.setHUD3DVisible(!this.hasDomOverlay);
+        this.configureHUD3DButtons({ state: "ready" });
+
+        // 3D HUD buttons -> start/restart
+        if (this.hud3dBtnPrimary) {
+          onActivate(this.hud3dBtnPrimary, () => {
+            if (this.started) {
+              this.startGame(); // restart
+            } else {
+              this.startGame();
+            }
+          });
+        }
       },
 
       startGame() {
@@ -604,6 +624,7 @@
         beep.play(784, 0.07, 0.05);
         showToast("開始！搵第一樣～");
         this.updateHUD3D("遊戲開始", "留意提示，點擊正確文物", this.hud3dTimer?.getAttribute("value") || "");
+        this.configureHUD3DButtons({ state: "inGame" });
 
         this.startHintCycle(true);
 
@@ -636,9 +657,11 @@
           this.showCollection();
           sayWithFallback("完成喇！你已經收集咗三件文物。好叻！", true);
           this.updateHUD3D("完成！", "恭喜完成收藏！按 Trigger 重玩", this.hud3dTimer?.getAttribute("value") || "");
+          this.configureHUD3DButtons({ state: "end" });
         } else {
           sayWithFallback("時間到喇，下次再挑戰。", true);
           this.updateHUD3D("時間到", "按 Trigger / click 重新開始", this.hud3dTimer?.getAttribute("value") || "");
+          this.configureHUD3DButtons({ state: "end" });
         }
       },
 
@@ -700,6 +723,25 @@
         if (this.hud3dTitle && typeof title === "string") this.hud3dTitle.setAttribute("value", title);
         if (this.hud3dMsg && typeof msg === "string") this.hud3dMsg.setAttribute("value", msg);
         if (this.hud3dTimer && typeof timerLine === "string") this.hud3dTimer.setAttribute("value", timerLine);
+      },
+
+      configureHUD3DButtons({ state }) {
+        if (!this.hud3dBtnPrimary || !this.hud3dBtnSecondary) return;
+        if (state === "ready") {
+          this.hud3dBtnPrimary.setAttribute("visible", true);
+          this.hud3dBtnPrimaryLabel.setAttribute("value", "開始");
+          this.hud3dBtnSecondary.setAttribute("visible", false);
+          this.hud3dBtnSecondaryLabel.setAttribute("visible", false);
+        } else if (state === "inGame") {
+          this.hud3dBtnPrimary.setAttribute("visible", false);
+          this.hud3dBtnSecondary.setAttribute("visible", false);
+          this.hud3dBtnSecondaryLabel.setAttribute("visible", false);
+        } else if (state === "end") {
+          this.hud3dBtnPrimary.setAttribute("visible", true);
+          this.hud3dBtnPrimaryLabel.setAttribute("value", "再玩一次");
+          this.hud3dBtnSecondary.setAttribute("visible", false);
+          this.hud3dBtnSecondaryLabel.setAttribute("visible", false);
+        }
       },
 
       setHUD3DVisible(show) {
