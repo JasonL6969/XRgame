@@ -167,15 +167,15 @@
       cursor="rayOrigin: mouse; fuse: false"
       raycaster="objects: .clickable; far: 10; interval: 0">
         <!-- VR fallback HUD (head-locked) when DOM Overlay is unavailable -->
-        <a-entity id="hud3d" position="0 -0.08 -0.95" scale="0.60 0.60 0.60" visible="false">
-          <a-plane id="hud3dPanel" width="0.92" height="0.42" color="#0b1220" opacity="0.82" radius="0.04" material="shader: flat"></a-plane>
-          <a-text id="hud3dTitle" value="故宮尋寶" position="-0.42 0.13 0.01" width="1.6" color="#EAF2FF" opacity="0.95"></a-text>
-          <a-text id="hud3dMsg" value="按 Trigger / 點擊開始" position="-0.42 0.03 0.01" width="1.8" color="#cfe1ff" opacity="0.92"></a-text>
-          <a-text id="hud3dTimer" value="⏱ 03:30｜已找到 0/3" position="-0.42 -0.07 0.01" width="1.8" color="#9dd5ff" opacity="0.9"></a-text>
-          <a-plane id="hud3dBtnPrimary" class="clickable" width="0.32" height="0.11" position="0.28 -0.16 0.01" color="#10b981" opacity="0.92" radius="0.02"></a-plane>
-          <a-text id="hud3dBtnPrimaryLabel" value="開始" align="center" width="0.6" position="0.28 -0.16 0.02" color="#0b1220" opacity="0.95"></a-text>
-          <a-plane id="hud3dBtnSecondary" class="clickable" width="0.32" height="0.11" position="-0.12 -0.16 0.01" color="#1f2937" opacity="0.75" radius="0.02" visible="false"></a-plane>
-          <a-text id="hud3dBtnSecondaryLabel" value="再玩一次" align="center" width="0.6" position="-0.12 -0.16 0.02" color="#EAF2FF" opacity="0.92" visible="false"></a-text>
+        <a-entity id="hud3d" position="0 -0.12 -0.95" scale="0.45 0.45 0.45" visible="false">
+          <a-plane id="hud3dPanel" width="0.70" height="0.28" color="#0b1220" opacity="0.85" radius="0.035" material="shader: flat"></a-plane>
+          <a-text id="hud3dTitle" value="故宮尋寶" position="0 0.08 0.01" align="center" width="1.4" color="#EAF2FF" opacity="0.98"></a-text>
+          <a-text id="hud3dMsg" value="按 Trigger / 點擊開始" position="0 0.02 0.01" align="center" width="1.6" color="#cfe1ff" opacity="0.95"></a-text>
+          <a-text id="hud3dTimer" value="⏱ 03:30｜已找到 0/3" position="0 -0.04 0.01" align="center" width="1.6" color="#9dd5ff" opacity="0.92"></a-text>
+          <a-plane id="hud3dBtnPrimary" class="clickable" width="0.30" height="0.10" position="0.18 -0.11 0.012" color="#10b981" opacity="0.95" radius="0.02"></a-plane>
+          <a-text id="hud3dBtnPrimaryLabel" value="開始" align="center" width="0.55" position="0.18 -0.11 0.015" color="#0b1220" opacity="0.98"></a-text>
+          <a-plane id="hud3dBtnSecondary" class="clickable" width="0.30" height="0.10" position="-0.18 -0.11 0.012" color="#1f2937" opacity="0.80" radius="0.02" visible="false"></a-plane>
+          <a-text id="hud3dBtnSecondaryLabel" value="再玩一次" align="center" width="0.55" position="-0.18 -0.11 0.015" color="#EAF2FF" opacity="0.95" visible="false"></a-text>
         </a-entity>
       </a-camera>
     </a-entity>
@@ -730,6 +730,7 @@
         if (state === "ready") {
           this.hud3dBtnPrimary.setAttribute("visible", true);
           this.hud3dBtnPrimaryLabel.setAttribute("value", "開始");
+          this.hud3dBtnPrimaryLabel.setAttribute("visible", true);
           this.hud3dBtnSecondary.setAttribute("visible", false);
           this.hud3dBtnSecondaryLabel.setAttribute("visible", false);
         } else if (state === "inGame") {
@@ -739,6 +740,7 @@
         } else if (state === "end") {
           this.hud3dBtnPrimary.setAttribute("visible", true);
           this.hud3dBtnPrimaryLabel.setAttribute("value", "再玩一次");
+          this.hud3dBtnPrimaryLabel.setAttribute("visible", true);
           this.hud3dBtnSecondary.setAttribute("visible", false);
           this.hud3dBtnSecondaryLabel.setAttribute("visible", false);
         }
