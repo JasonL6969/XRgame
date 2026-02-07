@@ -7,6 +7,8 @@
 
   <!-- A-Frame stable release build (Quest 3 / 3S 上相容性與社群測試最成熟) -->
   <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
+  <!-- Unicode-friendly text rendering for VR HUD -->
+  <script src="https://unpkg.com/aframe-troika-text@1.0.1/dist/aframe-troika-text.min.js"></script>
 
   <style>
     html, body {
@@ -167,15 +169,15 @@
       cursor="rayOrigin: mouse; fuse: false"
       raycaster="objects: .clickable; far: 10; interval: 0">
         <!-- VR fallback HUD (head-locked) when DOM Overlay is unavailable -->
-        <a-entity id="hud3d" position="0 -0.08 -0.85" scale="0.50 0.50 0.50" visible="false">
-          <a-plane id="hud3dPanel" width="0.74" height="0.30" color="#0f172a" opacity="0.88" radius="0.04" material="shader: flat"></a-plane>
-          <a-text id="hud3dTitle" value="故宮尋寶" position="0 0.10 0.01" align="center" width="1.5" color="#EAF2FF" opacity="0.98" wrap-count="18"></a-text>
-          <a-text id="hud3dMsg" value="按 Trigger / 點擊開始" position="0 0.03 0.01" align="center" width="1.7" color="#cfe1ff" opacity="0.97" wrap-count="24"></a-text>
-          <a-text id="hud3dTimer" value="⏱ 03:30｜已找到 0/3" position="0 -0.03 0.01" align="center" width="1.7" color="#9dd5ff" opacity="0.94" wrap-count="24"></a-text>
-          <a-plane id="hud3dBtnPrimary" class="clickable" width="0.30" height="0.10" position="0.18 -0.11 0.012" color="#10b981" opacity="0.96" radius="0.022"></a-plane>
-          <a-text id="hud3dBtnPrimaryLabel" value="開始" align="center" width="0.6" position="0.18 -0.11 0.015" color="#0b1220" opacity="0.99"></a-text>
-          <a-plane id="hud3dBtnSecondary" class="clickable" width="0.30" height="0.10" position="-0.18 -0.11 0.012" color="#1f2937" opacity="0.82" radius="0.022" visible="false"></a-plane>
-          <a-text id="hud3dBtnSecondaryLabel" value="再玩一次" align="center" width="0.6" position="-0.18 -0.11 0.015" color="#EAF2FF" opacity="0.97" visible="false"></a-text>
+        <a-entity id="hud3d" position="0 -0.08 -0.85" scale="0.42 0.42 0.42" visible="false">
+          <a-plane id="hud3dPanel" width="0.70" height="0.28" color="#0f172a" opacity="0.9" radius="0.04" material="shader: flat"></a-plane>
+          <a-troika-text id="hud3dTitle" value="故宮尋寶" position="0 0.08 0.01" align="center" anchor="center" color="#EAF2FF" opacity="0.98" font-size="0.065" max-width="0.65"></a-troika-text>
+          <a-troika-text id="hud3dMsg" value="按 Trigger / 點擊開始" position="0 0.02 0.01" align="center" anchor="center" color="#cfe1ff" opacity="0.97" font-size="0.052" max-width="0.70"></a-troika-text>
+          <a-troika-text id="hud3dTimer" value="⏱ 03:30｜已找到 0/3" position="0 -0.045 0.01" align="center" anchor="center" color="#9dd5ff" opacity="0.94" font-size="0.050" max-width="0.70"></a-troika-text>
+          <a-plane id="hud3dBtnPrimary" class="clickable" width="0.28" height="0.095" position="0.16 -0.12 0.012" color="#10b981" opacity="0.96" radius="0.022"></a-plane>
+          <a-troika-text id="hud3dBtnPrimaryLabel" value="開始" align="center" anchor="center" position="0.16 -0.12 0.015" color="#0b1220" opacity="0.99" font-size="0.048" max-width="0.55"></a-troika-text>
+          <a-plane id="hud3dBtnSecondary" class="clickable" width="0.28" height="0.095" position="-0.16 -0.12 0.012" color="#1f2937" opacity="0.82" radius="0.022" visible="false"></a-plane>
+          <a-troika-text id="hud3dBtnSecondaryLabel" value="再玩一次" align="center" anchor="center" position="-0.16 -0.12 0.015" color="#EAF2FF" opacity="0.97" font-size="0.048" max-width="0.55" visible="false"></a-troika-text>
         </a-entity>
       </a-camera>
     </a-entity>
