@@ -171,13 +171,23 @@
         <!-- VR fallback HUD (head-locked) when DOM Overlay is unavailable -->
         <a-entity id="hud3d" position="0 -0.08 -0.85" scale="0.42 0.42 0.42" visible="false">
           <a-plane id="hud3dPanel" width="0.70" height="0.28" color="#0f172a" opacity="0.9" radius="0.04" material="shader: flat"></a-plane>
-          <a-troika-text id="hud3dTitle" value="故宮尋寶" position="0 0.08 0.01" align="center" anchor="center" color="#EAF2FF" opacity="0.98" font-size="0.065" max-width="0.65"></a-troika-text>
-          <a-troika-text id="hud3dMsg" value="按 Trigger / 點擊開始" position="0 0.02 0.01" align="center" anchor="center" color="#cfe1ff" opacity="0.97" font-size="0.052" max-width="0.70"></a-troika-text>
-          <a-troika-text id="hud3dTimer" value="⏱ 03:30｜已找到 0/3" position="0 -0.045 0.01" align="center" anchor="center" color="#9dd5ff" opacity="0.94" font-size="0.050" max-width="0.70"></a-troika-text>
+          <!-- troika text (preferred for CJK), fallback a-text duplicates to avoid blank in some browsers -->
+          <a-troika-text id="hud3dTitle" value="故宮尋寶" position="0 0.08 0.02" align="center" anchor="center" color="#EAF2FF" opacity="0.98" font-size="0.065" max-width="0.65" material="depthTest:false;"></a-troika-text>
+          <a-text id="hud3dTitleAlt" value="故宮尋寶" position="0 0.08 0.025" align="center" width="1.5" color="#EAF2FF" opacity="0.90" visible="false"></a-text>
+
+          <a-troika-text id="hud3dMsg" value="按 Trigger / 點擊開始" position="0 0.02 0.02" align="center" anchor="center" color="#cfe1ff" opacity="0.97" font-size="0.052" max-width="0.70" material="depthTest:false;"></a-troika-text>
+          <a-text id="hud3dMsgAlt" value="按 Trigger / 點擊開始" position="0 0.02 0.025" align="center" width="1.6" color="#cfe1ff" opacity="0.88" visible="false"></a-text>
+
+          <a-troika-text id="hud3dTimer" value="⏱ 03:30｜已找到 0/3" position="0 -0.045 0.02" align="center" anchor="center" color="#9dd5ff" opacity="0.94" font-size="0.050" max-width="0.70" material="depthTest:false;"></a-troika-text>
+          <a-text id="hud3dTimerAlt" value="⏱ 03:30｜已找到 0/3" position="0 -0.045 0.025" align="center" width="1.6" color="#9dd5ff" opacity="0.85" visible="false"></a-text>
+
           <a-plane id="hud3dBtnPrimary" class="clickable" width="0.28" height="0.095" position="0.16 -0.12 0.012" color="#10b981" opacity="0.96" radius="0.022"></a-plane>
-          <a-troika-text id="hud3dBtnPrimaryLabel" value="開始" align="center" anchor="center" position="0.16 -0.12 0.015" color="#0b1220" opacity="0.99" font-size="0.048" max-width="0.55"></a-troika-text>
+          <a-troika-text id="hud3dBtnPrimaryLabel" value="開始" align="center" anchor="center" position="0.16 -0.12 0.018" color="#0b1220" opacity="0.99" font-size="0.048" max-width="0.55" material="depthTest:false;"></a-troika-text>
+          <a-text id="hud3dBtnPrimaryLabelAlt" value="開始" align="center" width="0.6" position="0.16 -0.12 0.023" color="#0b1220" opacity="0.88" visible="false"></a-text>
+
           <a-plane id="hud3dBtnSecondary" class="clickable" width="0.28" height="0.095" position="-0.16 -0.12 0.012" color="#1f2937" opacity="0.82" radius="0.022" visible="false"></a-plane>
-          <a-troika-text id="hud3dBtnSecondaryLabel" value="再玩一次" align="center" anchor="center" position="-0.16 -0.12 0.015" color="#EAF2FF" opacity="0.97" font-size="0.048" max-width="0.55" visible="false"></a-troika-text>
+          <a-troika-text id="hud3dBtnSecondaryLabel" value="再玩一次" align="center" anchor="center" position="-0.16 -0.12 0.018" color="#EAF2FF" opacity="0.97" font-size="0.048" max-width="0.55" visible="false" material="depthTest:false;"></a-troika-text>
+          <a-text id="hud3dBtnSecondaryLabelAlt" value="再玩一次" align="center" width="0.6" position="-0.16 -0.12 0.023" color="#EAF2FF" opacity="0.85" visible="false"></a-text>
         </a-entity>
       </a-camera>
     </a-entity>
@@ -465,6 +475,11 @@
         this.hud3dBtnSecondary = document.getElementById("hud3dBtnSecondary");
         this.hud3dBtnPrimaryLabel = document.getElementById("hud3dBtnPrimaryLabel");
         this.hud3dBtnSecondaryLabel = document.getElementById("hud3dBtnSecondaryLabel");
+        this.hud3dTitleAlt = document.getElementById("hud3dTitleAlt");
+        this.hud3dMsgAlt = document.getElementById("hud3dMsgAlt");
+        this.hud3dTimerAlt = document.getElementById("hud3dTimerAlt");
+        this.hud3dBtnPrimaryLabelAlt = document.getElementById("hud3dBtnPrimaryLabelAlt");
+        this.hud3dBtnSecondaryLabelAlt = document.getElementById("hud3dBtnSecondaryLabelAlt");
         this.hasDomOverlay = true;
 
         this.huntRootEl = this.el;
@@ -723,8 +738,11 @@
 
       updateHUD3D(title, msg, timerLine) {
         if (this.hud3dTitle && typeof title === "string") this.hud3dTitle.setAttribute("value", title);
+        if (this.hud3dTitleAlt && typeof title === "string") this.hud3dTitleAlt.setAttribute("value", title);
         if (this.hud3dMsg && typeof msg === "string") this.hud3dMsg.setAttribute("value", msg);
+        if (this.hud3dMsgAlt && typeof msg === "string") this.hud3dMsgAlt.setAttribute("value", msg);
         if (this.hud3dTimer && typeof timerLine === "string") this.hud3dTimer.setAttribute("value", timerLine);
+        if (this.hud3dTimerAlt && typeof timerLine === "string") this.hud3dTimerAlt.setAttribute("value", timerLine);
       },
 
       configureHUD3DButtons({ state }) {
@@ -733,18 +751,24 @@
           this.hud3dBtnPrimary.setAttribute("visible", true);
           this.hud3dBtnPrimaryLabel.setAttribute("value", "開始");
           this.hud3dBtnPrimaryLabel.setAttribute("visible", true);
+          if (this.hud3dBtnPrimaryLabelAlt) this.hud3dBtnPrimaryLabelAlt.setAttribute("visible", true);
           this.hud3dBtnSecondary.setAttribute("visible", false);
           this.hud3dBtnSecondaryLabel.setAttribute("visible", false);
+          if (this.hud3dBtnSecondaryLabelAlt) this.hud3dBtnSecondaryLabelAlt.setAttribute("visible", false);
         } else if (state === "inGame") {
           this.hud3dBtnPrimary.setAttribute("visible", false);
           this.hud3dBtnSecondary.setAttribute("visible", false);
           this.hud3dBtnSecondaryLabel.setAttribute("visible", false);
+          if (this.hud3dBtnPrimaryLabelAlt) this.hud3dBtnPrimaryLabelAlt.setAttribute("visible", false);
+          if (this.hud3dBtnSecondaryLabelAlt) this.hud3dBtnSecondaryLabelAlt.setAttribute("visible", false);
         } else if (state === "end") {
           this.hud3dBtnPrimary.setAttribute("visible", true);
           this.hud3dBtnPrimaryLabel.setAttribute("value", "再玩一次");
           this.hud3dBtnPrimaryLabel.setAttribute("visible", true);
+          if (this.hud3dBtnPrimaryLabelAlt) this.hud3dBtnPrimaryLabelAlt.setAttribute("visible", true);
           this.hud3dBtnSecondary.setAttribute("visible", false);
           this.hud3dBtnSecondaryLabel.setAttribute("visible", false);
+          if (this.hud3dBtnSecondaryLabelAlt) this.hud3dBtnSecondaryLabelAlt.setAttribute("visible", false);
         }
       },
 
