@@ -1,0 +1,110 @@
+    html, body {
+      margin:0; padding:0; width:100%; height:100%; overflow:hidden;
+      /* 桌機預設用深色底（避免你見到一片白）；進入 XR(Passthrough) 仍然係透明 */
+      background: #0b1220;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+    }
+
+    /* DOM Overlay (HUD) */
+    #overlay {
+      position: fixed;
+      inset: 0;
+      display: block;
+      pointer-events: none;
+      color: #fff;
+      text-shadow: 0 2px 10px rgba(0,0,0,.6);
+      z-index: 9998;
+    }
+    #overlay:xr-overlay { display:block; }
+    body.xr-nodom #overlay { display: none; }
+
+    #hud {
+      position: absolute;
+      left: 12px; right: 12px; top: 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.40);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,.12);
+      max-width: 720px;
+    }
+
+    #row { display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+    .pill {
+      display:inline-flex; gap:8px; align-items:center;
+      padding: 6px 10px; border-radius: 999px;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.14);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    #title { font-size: 16px; font-weight: 800; margin: 0 0 6px 0; }
+    #msg { font-size: 14px; margin: 0; line-height: 1.35; opacity: .98; }
+    #hint { font-size: 12px; opacity: .9; margin-top: 8px; }
+
+    #progressBarWrap { margin-top: 10px; height: 8px; border-radius: 999px; background: rgba(255,255,255,.12); overflow:hidden; }
+    #progressBar { height: 100%; width: 0%; background: linear-gradient(90deg,#6ee7ff,#7c3aed); border-radius: 999px; }
+
+    /* Info card */
+    #info {
+      position: absolute;
+      left: 12px; right: 12px;
+      bottom: 74px;
+      display: none;
+      max-width: 720px;
+    }
+    #info.show { display: block; }
+    #infoCard {
+      pointer-events: none;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.45);
+      border: 1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(8px);
+    }
+    #infoTitle { font-size: 15px; font-weight: 800; margin: 0 0 6px 0; }
+    #infoBody { font-size: 13px; margin: 0; line-height: 1.45; opacity: .98; white-space: pre-line; }
+
+    /* Toast */
+    #toast {
+      position:absolute;
+      left: 12px; right: 12px;
+      bottom: 14px;
+      display:flex; justify-content:center;
+      pointer-events:none;
+    }
+    #toast > div {
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.45);
+      border: 1px solid rgba(255,255,255,.12);
+      font-size: 13px;
+      max-width: 720px;
+      transform: translateY(6px);
+      opacity: 0;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+    #toast.show > div { opacity: 1; transform: translateY(0px); }
+
+    /* Crosshair */
+    #crosshair{
+      position: fixed;
+      left: 50%; top: 50%;
+      width: 18px; height: 18px;
+      margin-left: -9px; margin-top: -9px;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.85;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,.45));
+    }
+    #crosshair::before,
+    #crosshair::after{
+      content: "";
+      position: absolute;
+      left: 50%; top: 50%;
+      background: rgba(255,255,255,.92);
+      border-radius: 2px;
+    }
+    #crosshair::before{ width: 18px; height: 2px; transform: translate(-50%, -50%); }
+    #crosshair::after{ width: 2px; height: 18px; transform: translate(-50%, -50%); }
