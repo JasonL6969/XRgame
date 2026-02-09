@@ -109,5 +109,23 @@
   </a-scene>
 
   <script defer src="scripts/game.js"></script>
+  <script>
+    (function(){
+      const dbg = document.createElement('div');
+      dbg.id = 'debugBox';
+      dbg.style = 'position:fixed;right:12px;top:12px;background:rgba(255,255,255,0.06);color:#fff;padding:8px;border-radius:8px;z-index:99999;font-size:12px;backdrop-filter:blur(6px);pointer-events:none;';
+      dbg.textContent = 'Scene: initializing...';
+      document.body.appendChild(dbg);
+      const scene = document.getElementById('sceneRoot');
+      if (!scene) { dbg.textContent = 'Scene: NOT FOUND'; return; }
+      scene.addEventListener('loaded', () => { dbg.textContent = 'Scene: loaded'; });
+      scene.addEventListener('renderstart', () => { dbg.textContent = 'Scene: renderstart'; dbg.style.background = 'rgba(16,185,129,0.12)'; });
+      scene.addEventListener('enter-vr', () => { dbg.textContent = 'Scene: enter-vr'; });
+      scene.addEventListener('exit-vr', () => { dbg.textContent = 'Scene: exit-vr'; });
+      setTimeout(() => {
+        if (!/renderstart/.test(dbg.textContent)) dbg.textContent += ' (no renderstart after 3s)';
+      }, 3000);
+    })();
+  </script>
 </body>
 </html>
