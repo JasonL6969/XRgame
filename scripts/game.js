@@ -387,6 +387,23 @@
               }
             }, 8000);
 
+            // Ensure all UI is visible in VR: force 3D HUD and attempt to keep DOM overlay visible
+            try {
+              this.setHUD3DVisible(true);
+              if (document.body.classList.contains('xr-nodom')) document.body.classList.remove('xr-nodom');
+              const overlayEl = document.getElementById('overlay');
+              if (overlayEl) overlayEl.style.display = 'block';
+
+              // Ensure HUD label/button elements are visible if present
+              if (this.hud3dFallbackTitle) this.hud3dFallbackTitle.setAttribute('visible', true);
+              if (this.hud3dFallbackMsg) this.hud3dFallbackMsg.setAttribute('visible', true);
+              if (this.hud3dFallbackTimer) this.hud3dFallbackTimer.setAttribute('visible', true);
+              if (this.hud3dBtnPrimary) this.hud3dBtnPrimary.setAttribute('visible', true);
+              if (this.hud3dBtnSecondary) this.hud3dBtnSecondary.setAttribute('visible', true);
+              if (this.hud3dBtnPrimaryLabel) this.hud3dBtnPrimaryLabel.setAttribute('visible', true);
+              if (this.hud3dBtnSecondaryLabel) this.hud3dBtnSecondaryLabel.setAttribute('visible', true);
+            } catch (e) { console.warn('[hunt-game] force-show-ui failed', e); }
+
             this.centerHuntOnPlayer();
             this.spawnArtifacts();
             this.applyTargetHighlight();
