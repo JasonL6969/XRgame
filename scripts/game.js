@@ -263,7 +263,9 @@
         this.hudCtx = this.hudCanvas?.getContext?.("2d") || null;
         this.hudTex = null;
         this.hudButtonLabel = "開始";
-        this.hud3dFallback = document.getElementById("hud3dFallback");
+        this.hud3dFallbackTitle = document.getElementById("hud3dFallbackTitle");
+        this.hud3dFallbackMsg = document.getElementById("hud3dFallbackMsg");
+        this.hud3dFallbackTimer = document.getElementById("hud3dFallbackTimer");
         this.hasDomOverlay = !FORCE_NO_DOM;
 
         this.huntRootEl = this.el;
@@ -533,7 +535,9 @@
         if (this.hud3dTitleAlt) this.hud3dTitleAlt.setAttribute("visible", true);
         if (this.hud3dMsgAlt) this.hud3dMsgAlt.setAttribute("visible", true);
         if (this.hud3dTimerAlt) this.hud3dTimerAlt.setAttribute("visible", true);
-        if (this.hud3dFallback) this.hud3dFallback.setAttribute("value", `${title}\n${msg}\n${timerLine || ""}`);
+        if (this.hud3dFallbackTitle) this.hud3dFallbackTitle.setAttribute("value", title || "");
+        if (this.hud3dFallbackMsg) this.hud3dFallbackMsg.setAttribute("value", msg || "");
+        if (this.hud3dFallbackTimer) this.hud3dFallbackTimer.setAttribute("value", timerLine || "");
         this.redrawHUDCanvas({ title, msg, timer: timerLine });
       },
 
