@@ -1064,6 +1064,22 @@
         model.addEventListener('model-error', (ev) => {
           console.warn('[spawnGLB] model-error', assetId, ev);
           showToast('⚠️ 有模型載入失敗：檢查 3dModel/ 路徑同檔名大小寫');
+
+          // Fallback: create a visible placeholder so user can confirm spawn worked
+          try {
+            const placeholder = document.createElement('a-box');
+            placeholder.setAttribute('class', 'artifactHit');
+            placeholder.setAttribute('width', '0.28');
+            placeholder.setAttribute('height', '0.18');
+            placeholder.setAttribute('depth', '0.20');
+            placeholder.setAttribute('material', 'color:#f97316; roughness:0.6; metalness:0.05;');
+            placeholder.setAttribute('position', `0 ${yOffset + 0.02} 0`);
+            placeholder.setAttribute('rotation', `0 ${rotY} 0`);
+            root.appendChild(placeholder);
+            console.log('[spawnGLB] appended placeholder for', assetId);
+          } catch (err) {
+            console.error('[spawnGLB] placeholder creation failed', err);
+          }
         });
 
         root.appendChild(model);
