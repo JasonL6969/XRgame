@@ -551,27 +551,31 @@
         if (!this.hud3dBtnPrimary || !this.hud3dBtnSecondary) return;
         if (state === "ready") {
           this.hud3dBtnPrimary.setAttribute("visible", true);
-          this.hud3dBtnPrimaryLabel.setAttribute("value", "開始");
-          this.hud3dBtnPrimaryLabel.setAttribute("visible", true);
+          if (this.hud3dBtnPrimaryLabel) {
+            this.hud3dBtnPrimaryLabel.setAttribute("value", "開始");
+            this.hud3dBtnPrimaryLabel.setAttribute("visible", true);
+          }
           if (this.hud3dBtnPrimaryLabelAlt) this.hud3dBtnPrimaryLabelAlt.setAttribute("visible", true);
           this.hud3dBtnSecondary.setAttribute("visible", false);
-          this.hud3dBtnSecondaryLabel.setAttribute("visible", false);
+          if (this.hud3dBtnSecondaryLabel) this.hud3dBtnSecondaryLabel.setAttribute("visible", false);
           if (this.hud3dBtnSecondaryLabelAlt) this.hud3dBtnSecondaryLabelAlt.setAttribute("visible", false);
           this.hudButtonLabel = "開始";
         } else if (state === "inGame") {
           this.hud3dBtnPrimary.setAttribute("visible", false);
           this.hud3dBtnSecondary.setAttribute("visible", false);
-          this.hud3dBtnSecondaryLabel.setAttribute("visible", false);
+          if (this.hud3dBtnSecondaryLabel) this.hud3dBtnSecondaryLabel.setAttribute("visible", false);
           if (this.hud3dBtnPrimaryLabelAlt) this.hud3dBtnPrimaryLabelAlt.setAttribute("visible", false);
           if (this.hud3dBtnSecondaryLabelAlt) this.hud3dBtnSecondaryLabelAlt.setAttribute("visible", false);
           this.hudButtonLabel = "";
         } else if (state === "end") {
           this.hud3dBtnPrimary.setAttribute("visible", true);
-          this.hud3dBtnPrimaryLabel.setAttribute("value", "再玩一次");
-          this.hud3dBtnPrimaryLabel.setAttribute("visible", true);
+          if (this.hud3dBtnPrimaryLabel) {
+            this.hud3dBtnPrimaryLabel.setAttribute("value", "再玩一次");
+            this.hud3dBtnPrimaryLabel.setAttribute("visible", true);
+          }
           if (this.hud3dBtnPrimaryLabelAlt) this.hud3dBtnPrimaryLabelAlt.setAttribute("visible", true);
           this.hud3dBtnSecondary.setAttribute("visible", false);
-          this.hud3dBtnSecondaryLabel.setAttribute("visible", false);
+          if (this.hud3dBtnSecondaryLabel) this.hud3dBtnSecondaryLabel.setAttribute("visible", false);
           if (this.hud3dBtnSecondaryLabelAlt) this.hud3dBtnSecondaryLabelAlt.setAttribute("visible", false);
           this.hudButtonLabel = "再玩一次";
         }
