@@ -344,6 +344,13 @@
         window.addEventListener("click", () => {
           if (!this.started) this.startGame();
         });
+        // If the page DOM includes start/restart buttons, wire them to the game
+        try {
+          const domStart = document.getElementById('startBtn') || document.getElementById('btnStart');
+          if (domStart) domStart.addEventListener('click', (e) => { e.preventDefault(); if (!this.started) this.startGame(); else this.startGame(); });
+          const domRestart = document.getElementById('restartBtn') || document.getElementById('btnRestart');
+          if (domRestart) domRestart.addEventListener('click', (e) => { e.preventDefault(); this.startGame(); });
+        } catch (e) { console.warn('[hunt-game] bind DOM buttons failed', e); }
         window.addEventListener("keydown", (e) => {
           if (e.code !== "Space") return;
           if (!this.started) this.startGame();
