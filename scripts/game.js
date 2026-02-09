@@ -382,7 +382,13 @@
           if (!cam || !cam.object3D) return;
           const p = new THREE.Vector3();
           cam.object3D.getWorldPosition(p);
-          this.huntRootEl.object3D.position.set(p.x, 0.15, p.z);
+          // Place the hunt root slightly in front of the player (so spawned items are in view)
+          const forward = new THREE.Vector3();
+          cam.object3D.getWorldDirection(forward);
+          // move forward by ~1.6m (same as original scene default)
+          const offset = forward.multiplyScalar(1.6);
+          const targetPos = p.clone().add(offset);
+          this.huntRootEl.object3D.position.set(targetPos.x, 0.15, targetPos.z);
         } catch (e) {}
       },
 
@@ -703,6 +709,7 @@
         const spots = makeRingSpots(pool.length, 1.35, 2.65, 0.0);
         shuffleInPlace(spots);
 
+        console.log('[spawnArtifacts] pool length:', pool.length);
         pool.forEach((a, i) => {
           const wrapper = document.createElement("a-entity");
           wrapper.setAttribute("id", `item_${a.id}`);
@@ -723,6 +730,8 @@
           body.setAttribute("position", "0 0.03 0");
 
           a.make(body);
+
+          console.log('[spawnArtifacts] placed', a.id, 'at', s.position);
 
           const hit = body.querySelector(".artifactHit") || body;
           hit.classList.add("clickable");
@@ -966,7 +975,9 @@
         model.setAttribute("position", `0 ${yOffset} 0`);
         model.setAttribute("shadow", "cast: false; receive: false");
 
+        console.log('[spawnGLB] appending model', assetId);
         model.addEventListener("model-loaded", () => {
+          console.log('[spawnGLB] model-loaded', assetId);
           try {
             const obj = model.getObject3D("mesh");
             if (!obj) return;
@@ -1050,7 +1061,8 @@
           }
         });
 
-        model.addEventListener('model-error', () => {
+        model.addEventListener('model-error', (ev) => {
+          console.warn('[spawnGLB] model-error', assetId, ev);
           showToast('⚠️ 有模型載入失敗：檢查 3dModel/ 路徑同檔名大小寫');
         });
 
