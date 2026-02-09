@@ -46,6 +46,7 @@
     vr-mode-ui="enabled: false"
   >
     <a-assets timeout="10000">
+      <img id="ui-start" src="image/Ui/Start_btn.png" />
       <a-asset-item id="mdl-cabbage" src="3dModel/cabbage.glb"></a-asset-item>
       <a-asset-item id="mdl-meat" src="3dModel/meat.glb"></a-asset-item>
       <a-asset-item id="mdl-chicken" src="3dModel/chickenCup.glb"></a-asset-item>
@@ -70,7 +71,7 @@
           <!-- Invisible hit areas for buttons; labels are drawn on canvas -->
           <a-plane id="hud3dBtnPrimary" class="clickable" width="0.30" height="0.10" position="0.16 -0.12 0.012"
                    color="#10b981" opacity="0.01" radius="0.022"></a-plane>
-          <a-plane id="hud3dBtnPrimaryBg" width="0.30" height="0.10" position="0.16 -0.12 0.011" color="#10b981" radius="0.022"></a-plane>
+          <a-plane id="hud3dBtnPrimaryBg" width="0.30" height="0.10" position="0.16 -0.12 0.011" material="shader: flat; src: #ui-start; transparent: true" radius="0.022"></a-plane>
           <a-troika-text id="hud3dBtnPrimaryLabel" value="開始" font-size="0.045" color="#081018" max-width="0.28" text-align="center" position="0.16 -0.12 0.015"></a-troika-text>
           <a-plane id="hud3dBtnSecondary" class="clickable" width="0.30" height="0.10" position="-0.16 -0.12 0.012"
                    color="#1f2937" opacity="0.01" radius="0.022" visible="false"></a-plane>

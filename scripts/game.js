@@ -466,11 +466,8 @@
         // 3D HUD buttons -> start/restart
         if (this.hud3dBtnPrimary) {
           onActivate(this.hud3dBtnPrimary, () => {
-            if (this.started) {
-              this.startGame(); // restart
-            } else {
-              this.startGame();
-            }
+            if (this.started) return;
+            this.startGame();
           });
         }
       },
@@ -611,32 +608,42 @@
         if (!this.hud3dBtnPrimary || !this.hud3dBtnSecondary) return;
         if (state === "ready") {
           this.hud3dBtnPrimary.setAttribute("visible", true);
+          if (this.hud3dBtnPrimaryBg) this.hud3dBtnPrimaryBg.setAttribute('visible', true);
           if (this.hud3dBtnPrimaryLabel) {
             this.hud3dBtnPrimaryLabel.setAttribute("value", "開始");
             this.hud3dBtnPrimaryLabel.setAttribute("visible", true);
           }
           if (this.hud3dBtnPrimaryLabelAlt) this.hud3dBtnPrimaryLabelAlt.setAttribute("visible", true);
           this.hud3dBtnSecondary.setAttribute("visible", false);
+          if (this.hud3dBtnSecondaryBg) this.hud3dBtnSecondaryBg.setAttribute('visible', false);
           if (this.hud3dBtnSecondaryLabel) this.hud3dBtnSecondaryLabel.setAttribute("visible", false);
           if (this.hud3dBtnSecondaryLabelAlt) this.hud3dBtnSecondaryLabelAlt.setAttribute("visible", false);
           this.hudButtonLabel = "開始";
         } else if (state === "inGame") {
           this.hud3dBtnPrimary.setAttribute("visible", false);
+          if (this.hud3dBtnPrimaryBg) this.hud3dBtnPrimaryBg.setAttribute('visible', false);
           this.hud3dBtnSecondary.setAttribute("visible", false);
+          if (this.hud3dBtnSecondaryBg) this.hud3dBtnSecondaryBg.setAttribute('visible', false);
           if (this.hud3dBtnSecondaryLabel) this.hud3dBtnSecondaryLabel.setAttribute("visible", false);
           if (this.hud3dBtnPrimaryLabelAlt) this.hud3dBtnPrimaryLabelAlt.setAttribute("visible", false);
           if (this.hud3dBtnSecondaryLabelAlt) this.hud3dBtnSecondaryLabelAlt.setAttribute("visible", false);
+          // hide DOM overlay start button if present
+          try { const domStart = document.getElementById('startBtn') || document.getElementById('btnStart'); if (domStart) domStart.style.display = 'none'; } catch(e) {}
           this.hudButtonLabel = "";
         } else if (state === "end") {
           this.hud3dBtnPrimary.setAttribute("visible", true);
+          if (this.hud3dBtnPrimaryBg) this.hud3dBtnPrimaryBg.setAttribute('visible', true);
           if (this.hud3dBtnPrimaryLabel) {
             this.hud3dBtnPrimaryLabel.setAttribute("value", "再玩一次");
             this.hud3dBtnPrimaryLabel.setAttribute("visible", true);
           }
           if (this.hud3dBtnPrimaryLabelAlt) this.hud3dBtnPrimaryLabelAlt.setAttribute("visible", true);
           this.hud3dBtnSecondary.setAttribute("visible", false);
+          if (this.hud3dBtnSecondaryBg) this.hud3dBtnSecondaryBg.setAttribute('visible', false);
           if (this.hud3dBtnSecondaryLabel) this.hud3dBtnSecondaryLabel.setAttribute("visible", false);
           if (this.hud3dBtnSecondaryLabelAlt) this.hud3dBtnSecondaryLabelAlt.setAttribute("visible", false);
+          // show DOM start/restart appropriately
+          try { const domStart = document.getElementById('startBtn') || document.getElementById('btnStart'); if (domStart) domStart.style.display = 'none'; const domRestart = document.getElementById('restartBtn') || document.getElementById('btnRestart'); if (domRestart) domRestart.style.display = 'inline-block'; } catch(e) {}
           this.hudButtonLabel = "再玩一次";
         }
         // 確保備援文字跟著主文字顯示狀態
