@@ -269,6 +269,10 @@
         this.hud3dRoot = document.getElementById("hud3d");
         this.hud3dBtnPrimary = document.getElementById("hud3dBtnPrimary");
         this.hud3dBtnSecondary = document.getElementById("hud3dBtnSecondary");
+        this.hud3dBtnPrimaryBg = document.getElementById("hud3dBtnPrimaryBg");
+        this.hud3dBtnSecondaryBg = document.getElementById("hud3dBtnSecondaryBg");
+        this.hud3dBtnPrimaryLabel = document.getElementById("hud3dBtnPrimaryLabel");
+        this.hud3dBtnSecondaryLabel = document.getElementById("hud3dBtnSecondaryLabel");
         this.hudCanvas = document.getElementById("hudCanvas");
         this.hudCtx = this.hudCanvas?.getContext?.("2d") || null;
         this.hudTex = null;
