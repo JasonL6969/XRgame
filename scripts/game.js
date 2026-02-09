@@ -239,11 +239,11 @@
     AFRAME.registerComponent("hunt-game", {
       init() {
         // Apply debug flags: noxr / nodom
-        const scene = document.getElementById("sceneRoot");
-        if (FORCE_NO_XR && scene) {
-          scene.setAttribute("xr-mode-ui", "enabled: false");
-          scene.setAttribute("webxr", "");
-          scene.setAttribute("vr-mode-ui", "enabled: false");
+        const sceneRoot = document.getElementById("sceneRoot");
+        if (FORCE_NO_XR && sceneRoot) {
+          sceneRoot.setAttribute("xr-mode-ui", "enabled: false");
+          sceneRoot.setAttribute("webxr", "");
+          sceneRoot.setAttribute("vr-mode-ui", "enabled: false");
         }
 
         this.hudTitle = document.getElementById("title");
