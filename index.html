@@ -64,9 +64,9 @@
           <a-plane id="hud3dPanel" width="0.75" height="0.32" color="#0f172a" opacity="0.9" radius="0.04"
                    material="shader: flat; src: #hudCanvas; transparent: true"></a-plane>
           <!-- Ultimate fallback text to ensure always readable in case canvas fails -->
-          <a-text id="hud3dFallbackTitle" value="" align="center" width="1.8" color="#EAF2FF" opacity="0.95" position="0 0.09 0.015"></a-text>
-          <a-text id="hud3dFallbackMsg" value="" align="center" width="1.8" color="#cfe1ff" opacity="0.95" position="0 0.02 0.015"></a-text>
-          <a-text id="hud3dFallbackTimer" value="" align="center" width="1.8" color="#9dd5ff" opacity="0.95" position="0 -0.05 0.015"></a-text>
+          <a-troika-text id="hud3dFallbackTitle" value="" color="#EAF2FF" opacity="0.95" font-size="0.06" max-width="0.7" text-align="center" position="0 0.09 0.015"></a-troika-text>
+          <a-troika-text id="hud3dFallbackMsg" value="" color="#cfe1ff" opacity="0.95" font-size="0.045" max-width="0.7" text-align="center" position="0 0.02 0.015"></a-troika-text>
+          <a-troika-text id="hud3dFallbackTimer" value="" color="#9dd5ff" opacity="0.95" font-size="0.04" max-width="0.7" text-align="center" position="0 -0.05 0.015"></a-troika-text>
           <!-- Invisible hit areas for buttons; labels are drawn on canvas -->
           <a-plane id="hud3dBtnPrimary" class="clickable" width="0.30" height="0.10" position="0.16 -0.12 0.012"
                    color="#10b981" opacity="0.01" radius="0.022"></a-plane>
@@ -99,7 +99,7 @@
       </a-entity>
 
       <a-entity id="floatingText" position="0 0.42 0">
-        <a-text value="開始後：搵到目標就點佢" align="center" width="2.8" color="#EAF2FF" opacity="0.92"></a-text>
+        <a-troika-text value="開始後：搵到目標就點佢" text-align="center" color="#EAF2FF" opacity="0.92" font-size="0.08" max-width="2.6"></a-troika-text>
       </a-entity>
 
       <a-entity id="items"></a-entity>

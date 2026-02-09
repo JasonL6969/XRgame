@@ -66,8 +66,17 @@
     const playAudio = (id, textForToast="") => {
       if (!id) return false;
       try {
+        // stop any existing fallback audio to avoid overlapping playback
+        if (window.__currentTtsAudio) {
+          try { window.__currentTtsAudio.pause(); window.__currentTtsAudio.currentTime = 0; } catch(e) {}
+          window.__currentTtsAudio = null;
+        }
         const a = new Audio(`${ttsAudioBase}${id}.mp3`);
-        a.play().catch(() => {});
+        window.__currentTtsAudio = a;
+        setSpeakBusy(true);
+        a.onended = () => { setSpeakBusy(false); window.__currentTtsAudio = null; };
+        a.onerror = () => { setSpeakBusy(false); window.__currentTtsAudio = null; };
+        a.play().catch(() => { setSpeakBusy(false); window.__currentTtsAudio = null; });
       } catch (e) {
         return false;
       }
@@ -251,7 +260,7 @@
         this.hudTimer = document.getElementById("timer");
         this.hudFound = document.getElementById("found");
         this.progressBar = document.getElementById("progressBar");
-        this.floatingText = document.querySelector("#floatingText a-text");
+        this.floatingText = document.querySelector("#floatingText a-troika-text");
         this.itemsRoot = document.getElementById("items");
         this.hud3dTitle = document.getElementById("hud3dTitle");
         this.hud3dMsg = document.getElementById("hud3dMsg");
