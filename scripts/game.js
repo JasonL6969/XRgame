@@ -354,6 +354,10 @@
         const scene = this.el.sceneEl;
         if (scene) {
           scene.addEventListener('enter-vr', () => {
+            // XR enter – attempt to detect DOM overlay support, but guard for session problems.
+            let renderStarted = false;
+            let xrTimeout = null;
+            const onRenderStart = () => { renderStarted = true; if (xrTimeout) { clearTimeout(xrTimeout); xrTimeout = null; } };
             try {
               const session = scene.renderer?.xr?.getSession?.();
               const hasDom = !!(session && session.domOverlayState && session.domOverlayState.type);
@@ -364,6 +368,17 @@
               this.hasDomOverlay = false;
               this.setHUD3DVisible(true);
             }
+
+            // start a short timeout: if we don't see 'renderstart' within 8s, inform user and log XR info
+            scene.addEventListener('renderstart', onRenderStart, { once: true });
+            xrTimeout = setTimeout(() => {
+              if (!renderStarted) {
+                showToast('XR 載入逾時：如使用 Quest，請嘗試在 URL 加上 ?nodom 後重試，以停用 DOM overlay');
+                console.warn('[hunt-game] XR renderstart timeout; navigator.xr:', window.navigator.xr);
+                try { console.warn('[hunt-game] renderer.xr:', scene.renderer?.xr); } catch(e) {}
+              }
+            }, 8000);
+
             this.centerHuntOnPlayer();
             this.spawnArtifacts();
             this.applyTargetHighlight();
