@@ -4,6 +4,7 @@
     const params = new URLSearchParams(window.location.search || "");
     const FORCE_NO_XR = params.has("noxr");
     const FORCE_NO_DOM = params.has("nodom");
+    const FORCE_3D_HUD = params.has("force3dhud");
 
     function shuffleInPlace(arr) {
       for (let i = arr.length - 1; i > 0; i--) {
@@ -276,6 +277,7 @@
         this.hud3dFallbackMsg = document.getElementById("hud3dFallbackMsg");
         this.hud3dFallbackTimer = document.getElementById("hud3dFallbackTimer");
         this.hasDomOverlay = !FORCE_NO_DOM;
+        this.forced3dHUD = FORCE_3D_HUD;
 
         this.huntRootEl = this.el;
 
@@ -362,8 +364,14 @@
               const session = scene.renderer?.xr?.getSession?.();
               const hasDom = !!(session && session.domOverlayState && session.domOverlayState.type);
               this.hasDomOverlay = FORCE_NO_DOM ? false : hasDom;
-              this.setHUD3DVisible(!hasDom || FORCE_NO_DOM);
-              if (hasDom && !FORCE_NO_DOM) document.body.classList.remove("xr-nodom");
+              // If developer forced 3D HUD, override DOM overlay usage
+              if (this.forced3dHUD) {
+                this.hasDomOverlay = false;
+                this.setHUD3DVisible(true);
+              } else {
+                this.setHUD3DVisible(!hasDom || FORCE_NO_DOM);
+              }
+              if (hasDom && !FORCE_NO_DOM && !this.forced3dHUD) document.body.classList.remove("xr-nodom");
             } catch (e) {
               this.hasDomOverlay = false;
               this.setHUD3DVisible(true);
